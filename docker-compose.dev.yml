@@ -1,0 +1,29 @@
+# Hot reload for both services. Opt in with:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+# The frontend then runs the Vite dev server on http://localhost:5173 and proxies /api to the backend.
+
+services:
+  backend:
+    environment:
+      APP_ENV: development
+      UVICORN_EXTRA_ARGS: "--reload --reload-dir app"
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/alembic:/app/alembic
+
+  frontend:
+    build:
+      context: ./frontend
+      target: builder
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    environment:
+      VITE_API_PROXY_TARGET: http://backend:8000
+    ports:
+      - "${FRONTEND_DEV_PORT:-5173}:5173"
+    volumes:
+      - ./frontend:/app
+      # Keep the container's node_modules; the host copy may be built for another OS.
+      - frontend-node-modules:/app/node_modules
+
+volumes:
+  frontend-node-modules:
