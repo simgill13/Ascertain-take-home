@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from '@tanstack/react-router'
-import { ArrowLeftIcon } from 'lucide-react'
+import { ArrowLeftIcon, PencilIcon } from 'lucide-react'
 
 import { ErrorState } from '@/components/state/error-state'
 import { Badge } from '@/components/ui/badge'
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { NotesSection } from '@/features/notes/notes-section'
 import { patientQueryOptions } from '@/features/patients/api'
+import { DeletePatientButton } from '@/features/patients/delete-patient-button'
 import { PatientStatusBadge } from '@/features/patients/patient-status-badge'
 import type { Patient } from '@/features/patients/types'
 import { SummaryCard } from '@/features/summary/summary-card'
@@ -43,15 +44,26 @@ function PatientDetail({ patient }: { patient: Patient }) {
     <div className="space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-            {patient.first_name} {patient.last_name}
-          </h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+              {patient.first_name} {patient.last_name}
+            </h1>
+            <PatientStatusBadge status={patient.status} />
+          </div>
           <p className="text-muted-foreground mt-1 text-sm">
             {formatAge(patient.age)} · Born {formatDate(patient.date_of_birth)}
             {patient.blood_type ? ` · Blood type ${patient.blood_type}` : ''}
           </p>
         </div>
-        <PatientStatusBadge status={patient.status} className="self-start" />
+        <div className="flex shrink-0 gap-2">
+          <Button asChild variant="outline">
+            <Link to="/patients/$patientId/edit" params={{ patientId: patient.id }}>
+              <PencilIcon aria-hidden="true" />
+              Edit
+            </Link>
+          </Button>
+          <DeletePatientButton patient={patient} />
+        </div>
       </header>
 
       <div className="grid gap-4 lg:grid-cols-3">

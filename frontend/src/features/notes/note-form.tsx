@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2Icon } from 'lucide-react'
-import { useForm } from 'react-hook-form'
+import { useForm, type UseFormSetError } from 'react-hook-form'
 import { z } from 'zod'
 
 import { Button } from '@/components/ui/button'
@@ -102,10 +102,7 @@ const SERVER_FIELD_TO_FORM_FIELD: Record<string, keyof NoteFormValues> = {
   noted_at: 'notedAt',
 }
 
-function applyServerFieldErrors(
-  error: ApiError,
-  setError: ReturnType<typeof useForm<NoteFormValues>>['setError'],
-) {
+function applyServerFieldErrors(error: ApiError, setError: UseFormSetError<NoteFormValues>) {
   for (const fieldError of error.fieldErrors) {
     const formField = SERVER_FIELD_TO_FORM_FIELD[fieldError.field]
     if (formField) {
