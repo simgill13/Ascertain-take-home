@@ -9,6 +9,19 @@ from app.seed.sample_patients import SAMPLE_PATIENTS, SeedPatient
 
 logger = logging.getLogger(__name__)
 
+# A chart exists before its first note or visit; new intakes were created days ago.
+CHART_LEAD_TIME = timedelta(days=90)
+NEW_INTAKE_AGE = timedelta(days=3)
+
+
+def registration_date(seed_patient: SeedPatient, reference: datetime) -> datetime:
+    history_days = [seed_note.days_before_reference for seed_note in seed_patient.notes]
+    if seed_patient.last_visit_days_ago is not None:
+        history_days.append(seed_patient.last_visit_days_ago)
+    if not history_days:
+        return reference - NEW_INTAKE_AGE
+    return reference - timedelta(days=max(history_days)) - CHART_LEAD_TIME
+
 
 def build_patient(seed_patient: SeedPatient, reference: datetime) -> Patient:
     last_visit_at = (
@@ -16,7 +29,10 @@ def build_patient(seed_patient: SeedPatient, reference: datetime) -> Patient:
         if seed_patient.last_visit_days_ago is not None
         else None
     )
+    registered_at = registration_date(seed_patient, reference)
     patient = Patient(
+        created_at=registered_at,
+        updated_at=registered_at,
         first_name=seed_patient.first_name,
         last_name=seed_patient.last_name,
         date_of_birth=seed_patient.date_of_birth,

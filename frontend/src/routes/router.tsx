@@ -5,9 +5,14 @@ import {
   createRouter,
   lazyRouteComponent,
   Outlet,
+  stripSearchParams,
 } from '@tanstack/react-router'
 
 import { AppShell } from '@/components/layout/app-shell'
+import {
+  DEFAULT_PATIENT_LIST_SEARCH,
+  patientListSearchSchema,
+} from '@/features/patients/search-params'
 import { NotFoundPage } from '@/routes/not-found-page'
 
 export type RouterContext = {
@@ -37,9 +42,20 @@ const dashboardRoute = createRoute({
 const patientsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/patients',
+  validateSearch: patientListSearchSchema,
+  search: { middlewares: [stripSearchParams(DEFAULT_PATIENT_LIST_SEARCH)] },
   component: lazyRouteComponent(
     () => import('@/features/patients/patient-list-page'),
     'PatientListPage',
+  ),
+})
+
+const newPatientRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/patients/new',
+  component: lazyRouteComponent(
+    () => import('@/features/patients/patient-form-page'),
+    'NewPatientPage',
   ),
 })
 
@@ -52,6 +68,15 @@ const patientDetailRoute = createRoute({
   ),
 })
 
+const editPatientRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/patients/$patientId/edit',
+  component: lazyRouteComponent(
+    () => import('@/features/patients/patient-form-page'),
+    'EditPatientPage',
+  ),
+})
+
 // The landing page sits outside the shell so it can own the whole viewport.
 const welcomeRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -60,7 +85,13 @@ const welcomeRoute = createRoute({
 })
 
 const routeTree = rootRoute.addChildren([
-  shellRoute.addChildren([dashboardRoute, patientsRoute, patientDetailRoute]),
+  shellRoute.addChildren([
+    dashboardRoute,
+    patientsRoute,
+    newPatientRoute,
+    patientDetailRoute,
+    editPatientRoute,
+  ]),
   welcomeRoute,
 ])
 

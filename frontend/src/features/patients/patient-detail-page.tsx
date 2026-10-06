@@ -1,13 +1,182 @@
-import { useParams } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
+import { Link, useParams } from '@tanstack/react-router'
+import { ArrowLeftIcon } from 'lucide-react'
 
-import { PageHeader } from '@/components/layout/page-header'
+import { ErrorState } from '@/components/state/error-state'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { patientQueryOptions } from '@/features/patients/api'
+import { PatientStatusBadge } from '@/features/patients/patient-status-badge'
+import type { Patient } from '@/features/patients/types'
+import { formatAge, formatDate, formatRelativeDate } from '@/lib/format'
 
 export function PatientDetailPage() {
   const { patientId } = useParams({ from: '/shell/patients/$patientId' })
+  const patientQuery = useQuery(patientQueryOptions(patientId))
+
   return (
     <>
-      <PageHeader title="Patient" description={`Record ${patientId}`} />
-      <p className="text-muted-foreground text-sm">Patient details arrive in the next phase.</p>
+      <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2">
+        <Link to="/patients">
+          <ArrowLeftIcon aria-hidden="true" />
+          All patients
+        </Link>
+      </Button>
+
+      {patientQuery.isPending ? (
+        <PatientDetailSkeleton />
+      ) : patientQuery.isError ? (
+        <ErrorState error={patientQuery.error} onRetry={() => void patientQuery.refetch()} />
+      ) : (
+        <PatientDetail patient={patientQuery.data} />
+      )}
     </>
+  )
+}
+
+function PatientDetail({ patient }: { patient: Patient }) {
+  return (
+    <div className="space-y-6">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+            {patient.first_name} {patient.last_name}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {formatAge(patient.age)} · Born {formatDate(patient.date_of_birth)}
+            {patient.blood_type ? ` · Blood type ${patient.blood_type}` : ''}
+          </p>
+        </div>
+        <PatientStatusBadge status={patient.status} className="self-start" />
+      </header>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>Contact</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="space-y-3 text-sm">
+              <DetailItem label="Phone">
+                <a href={`tel:${patient.phone}`} className="hover:underline">
+                  {patient.phone}
+                </a>
+              </DetailItem>
+              <DetailItem label="Email">
+                {patient.email ? (
+                  <a href={`mailto:${patient.email}`} className="break-all hover:underline">
+                    {patient.email}
+                  </a>
+                ) : (
+                  <span className="text-muted-foreground">Not provided</span>
+                )}
+              </DetailItem>
+              <DetailItem label="Address">
+                <address className="not-italic">
+                  {patient.address_line1}
+                  {patient.address_line2 ? <br /> : null}
+                  {patient.address_line2}
+                  <br />
+                  {patient.city}, {patient.state} {patient.postal_code}
+                </address>
+              </DetailItem>
+            </dl>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Clinical</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="space-y-3 text-sm">
+              <DetailItem label="Conditions">
+                <TagList items={patient.conditions} emptyLabel="No conditions recorded" />
+              </DetailItem>
+              <DetailItem label="Allergies">
+                <TagList
+                  items={patient.allergies}
+                  emptyLabel="No known allergies"
+                  variant="allergy"
+                />
+              </DetailItem>
+              <DetailItem label="Blood type">
+                {patient.blood_type ?? <span className="text-muted-foreground">Unknown</span>}
+              </DetailItem>
+            </dl>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Visits</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="space-y-3 text-sm">
+              <DetailItem label="Last visit">
+                {formatRelativeDate(patient.last_visit_at)}
+                {patient.last_visit_at ? (
+                  <span className="text-muted-foreground">
+                    {' '}
+                    · {formatDate(patient.last_visit_at)}
+                  </span>
+                ) : null}
+              </DetailItem>
+              <DetailItem label="Patient since">{formatDate(patient.created_at)}</DetailItem>
+            </dl>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+function DetailItem({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <dt className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{label}</dt>
+      <dd className="mt-0.5">{children}</dd>
+    </div>
+  )
+}
+
+function TagList({
+  items,
+  emptyLabel,
+  variant = 'default',
+}: {
+  items: string[]
+  emptyLabel: string
+  variant?: 'default' | 'allergy'
+}) {
+  if (items.length === 0) {
+    return <span className="text-muted-foreground">{emptyLabel}</span>
+  }
+  return (
+    <ul className="flex flex-wrap gap-1.5">
+      {items.map((item) => (
+        <li key={item}>
+          <Badge variant={variant === 'allergy' ? 'destructive' : 'secondary'}>{item}</Badge>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function PatientDetailSkeleton() {
+  return (
+    <div className="space-y-6" aria-busy="true" aria-label="Loading patient">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-48" />
+      </div>
+      <div className="grid gap-4 lg:grid-cols-3">
+        {Array.from({ length: 3 }, (_unused, cardIndex) => (
+          <Skeleton key={cardIndex} className="h-44" />
+        ))}
+      </div>
+    </div>
   )
 }
