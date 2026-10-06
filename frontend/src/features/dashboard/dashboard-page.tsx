@@ -20,6 +20,12 @@ const RECENT_VISITS_SEARCH = {
   order: 'desc',
 } as const
 const RECENT_VISITS_SHOWN = 6
+const STALE_ACTIVE_SEARCH = {
+  ...DEFAULT_PATIENT_LIST_SEARCH,
+  status: 'active',
+  sort: 'last_visit',
+  order: 'asc',
+} as const
 
 const STATUS_BAR_CLASS: Record<PatientStatus, string> = {
   active: 'bg-status-active',
@@ -59,7 +65,9 @@ export function DashboardPage() {
             <CardTitle>Patients by status</CardTitle>
           </CardHeader>
           <CardContent>
-            {statsQuery.data ? (
+            {statsQuery.isError ? (
+              <ErrorState error={statsQuery.error} onRetry={() => void statsQuery.refetch()} />
+            ) : statsQuery.data ? (
               <StatusChart stats={statsQuery.data} />
             ) : (
               <Skeleton className="h-40" aria-label="Loading status chart" />
@@ -119,13 +127,29 @@ export function DashboardPage() {
 
 function StatCards({ stats }: { stats: PatientStats | undefined }) {
   const cards = [
-    { label: 'Total patients', value: stats?.total, icon: UsersIcon },
-    { label: 'Visits in last 30 days', value: stats?.visits_last_30_days, icon: ActivityIcon },
-    { label: 'New in last 30 days', value: stats?.new_last_30_days, icon: UserPlusIcon },
+    {
+      label: 'Total patients',
+      value: stats?.total,
+      icon: UsersIcon,
+      search: DEFAULT_PATIENT_LIST_SEARCH,
+    },
+    {
+      label: 'Visits in last 30 days',
+      value: stats?.visits_last_30_days,
+      icon: ActivityIcon,
+      search: RECENT_VISITS_SEARCH,
+    },
+    {
+      label: 'New in last 30 days',
+      value: stats?.new_last_30_days,
+      icon: UserPlusIcon,
+      search: { ...DEFAULT_PATIENT_LIST_SEARCH, sort: 'created_at', order: 'desc' } as const,
+    },
     {
       label: 'Active, no visit in a year',
       value: stats?.without_recent_visit,
       icon: CalendarClockIcon,
+      search: STALE_ACTIVE_SEARCH,
     },
   ]
   return (
@@ -134,10 +158,16 @@ function StatCards({ stats }: { stats: PatientStats | undefined }) {
         const Icon = card.icon
         return (
           <li key={card.label}>
-            <Card className="h-full gap-2 py-4">
+            <Card className="hover:border-ring/60 h-full gap-2 py-4 transition-colors">
               <CardContent className="flex items-start justify-between gap-2 px-4">
                 <div>
-                  <p className="text-muted-foreground text-xs font-medium">{card.label}</p>
+                  <Link
+                    to="/patients"
+                    search={card.search}
+                    className="text-muted-foreground text-xs font-medium hover:underline focus-visible:underline"
+                  >
+                    {card.label}
+                  </Link>
                   <p className="font-display mt-1 text-3xl font-semibold tabular-nums">
                     {card.value === undefined ? (
                       <Skeleton className="mt-1 h-8 w-12" />
@@ -165,7 +195,13 @@ function StatusChart({ stats }: { stats: PatientStats }) {
         return (
           <li key={statusCount.status} className="text-sm">
             <div className="mb-1 flex items-center justify-between">
-              <span>{STATUS_LABELS[statusCount.status]}</span>
+              <Link
+                to="/patients"
+                search={{ ...DEFAULT_PATIENT_LIST_SEARCH, status: statusCount.status }}
+                className="hover:underline focus-visible:underline"
+              >
+                {STATUS_LABELS[statusCount.status]}
+              </Link>
               <span className="text-muted-foreground tabular-nums">{statusCount.count}</span>
             </div>
             <div

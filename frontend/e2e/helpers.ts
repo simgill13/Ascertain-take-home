@@ -1,6 +1,22 @@
-import { expect, type Page } from '@playwright/test'
+import { expect, type APIRequestContext, type Page } from '@playwright/test'
 
-export const uniqueLastName = () => `E2E${Date.now().toString(36)}`
+const E2E_LAST_NAME_PREFIX = 'E2E'
+const BACKEND_URL = process.env.E2E_BACKEND_URL ?? 'http://localhost:8000'
+
+export const uniqueLastName = () => `${E2E_LAST_NAME_PREFIX}${Date.now().toString(36)}`
+
+/** Remove patients a failed or interrupted run may have left behind. */
+export async function deleteLeftoverTestPatients(request: APIRequestContext) {
+  const response = await request.get(
+    `${BACKEND_URL}/patients?search=${E2E_LAST_NAME_PREFIX}&page_size=100`,
+  )
+  if (!response.ok()) return
+  const { items } = (await response.json()) as { items: Array<{ id: string; last_name: string }> }
+  const leftovers = items.filter((patient) => patient.last_name.startsWith(E2E_LAST_NAME_PREFIX))
+  await Promise.all(
+    leftovers.map((patient) => request.delete(`${BACKEND_URL}/patients/${patient.id}`)),
+  )
+}
 
 export async function fillPatientForm(page: Page, lastName: string) {
   await page.getByLabel('First name').fill('Playwright')

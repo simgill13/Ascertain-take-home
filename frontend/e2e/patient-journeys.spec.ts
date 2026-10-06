@@ -2,10 +2,15 @@ import { expect, test } from '@playwright/test'
 
 import {
   createPatientThroughUi,
+  deleteLeftoverTestPatients,
   deletePatientThroughUi,
   fillPatientForm,
   uniqueLastName,
 } from './helpers'
+
+test.afterEach(async ({ request }) => {
+  await deleteLeftoverTestPatients(request)
+})
 
 test.describe('coordinator journeys', () => {
   test('dashboard shows practice totals and links to the patient list', async ({ page }) => {
@@ -37,6 +42,18 @@ test.describe('coordinator journeys', () => {
     await page.getByRole('button', { name: 'Clear filters' }).click()
     await expect(searchBox).toHaveValue('')
     await expect(page).not.toHaveURL(/search=/)
+  })
+
+  test('a pause while typing a full name does not eat the space', async ({ page }) => {
+    await page.goto('/patients')
+    const searchBox = page.getByLabel('Search')
+
+    await searchBox.pressSequentially('Henry ', { delay: 20 })
+    await expect(page).toHaveURL(/search=Henry/)
+    await searchBox.pressSequentially('Cald', { delay: 20 })
+
+    await expect(searchBox).toHaveValue('Henry Cald')
+    await expect(page.getByRole('link', { name: 'Caldwell, Henry' })).toBeVisible()
   })
 
   test('status filter and sort are reflected in the URL and results', async ({ page }) => {

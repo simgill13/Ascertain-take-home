@@ -13,7 +13,9 @@ import { DeletePatientButton } from '@/features/patients/delete-patient-button'
 import { PatientStatusBadge } from '@/features/patients/patient-status-badge'
 import type { Patient } from '@/features/patients/types'
 import { SummaryCard } from '@/features/summary/summary-card'
+import { ApiError } from '@/lib/api/client'
 import { formatAge, formatDate, formatRelativeDate } from '@/lib/format'
+import { NotFoundPage } from '@/routes/not-found-page'
 
 const SKELETON_CARD_COUNT = 3
 
@@ -33,7 +35,7 @@ export function PatientDetailPage() {
       {patientQuery.isPending ? (
         <PatientDetailSkeleton />
       ) : patientQuery.isError ? (
-        <ErrorState error={patientQuery.error} onRetry={() => void patientQuery.refetch()} />
+        <PatientLoadError error={patientQuery.error} onRetry={() => void patientQuery.refetch()} />
       ) : (
         <PatientDetail patient={patientQuery.data} />
       )}
@@ -156,6 +158,14 @@ function PatientDetail({ patient }: { patient: Patient }) {
       </div>
     </div>
   )
+}
+
+/** A missing chart gets the 404 page; retry only helps when the server could not be reached. */
+export function PatientLoadError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
+  if (error instanceof ApiError && error.isNotFound) {
+    return <NotFoundPage />
+  }
+  return <ErrorState error={error} onRetry={onRetry} />
 }
 
 function DetailItem({ label, children }: { label: string; children: React.ReactNode }) {

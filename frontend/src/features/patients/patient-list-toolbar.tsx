@@ -1,4 +1,4 @@
-import { ArrowDownAZIcon, ArrowUpAZIcon, SearchIcon, XIcon } from 'lucide-react'
+import { ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, SearchIcon, XIcon } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -25,11 +25,13 @@ import { formatCount } from '@/lib/format'
 
 const SEARCH_DEBOUNCE_MS = 250
 const ALL_STATUSES = 'all'
+// Newest first is the useful default for date sorts; names and status read best ascending.
+const DESCENDING_BY_DEFAULT: ReadonlySet<PatientSortField> = new Set(['last_visit', 'created_at'])
 
 type PatientListToolbarProps = {
   listSearch: PatientListSearch
   onChange: (changes: Partial<PatientListSearch>) => void
-  resultCount: number
+  resultCount: number | null
   isFetching: boolean
 }
 
@@ -47,9 +49,12 @@ export function PatientListToolbar({
   )
 
   // When the URL changes from elsewhere (back button, "clear filters"), adopt its value.
+  // A commit of the user's own typing is left alone so a trailing space is not eaten mid-phrase.
   if (listSearch.search !== lastUrlSearch) {
     setLastUrlSearch(listSearch.search)
-    setSearchText(listSearch.search ?? '')
+    if ((listSearch.search ?? '') !== searchText.trim()) {
+      setSearchText(listSearch.search ?? '')
+    }
   }
 
   return (
@@ -108,7 +113,14 @@ export function PatientListToolbar({
             <div className="mt-1.5 flex gap-1">
               <Select
                 value={listSearch.sort}
-                onValueChange={(value) => onChange({ sort: value as PatientSortField, page: 1 })}
+                onValueChange={(value) => {
+                  const sort = value as PatientSortField
+                  onChange({
+                    sort,
+                    order: DESCENDING_BY_DEFAULT.has(sort) ? 'desc' : 'asc',
+                    page: 1,
+                  })
+                }}
               >
                 <SelectTrigger id="patient-sort" className="min-w-0 flex-1 sm:w-40 sm:flex-none">
                   <SelectValue />
@@ -134,7 +146,11 @@ export function PatientListToolbar({
                   onChange({ order: listSearch.order === 'asc' ? 'desc' : 'asc', page: 1 })
                 }
               >
-                {listSearch.order === 'asc' ? <ArrowDownAZIcon /> : <ArrowUpAZIcon />}
+                {listSearch.order === 'asc' ? (
+                  <ArrowUpNarrowWideIcon />
+                ) : (
+                  <ArrowDownWideNarrowIcon />
+                )}
               </Button>
             </div>
           </div>
@@ -142,7 +158,13 @@ export function PatientListToolbar({
       </div>
 
       <div className="text-muted-foreground flex items-center gap-3 text-sm" aria-live="polite">
-        <span>{isFetching ? 'Updating…' : formatCount(resultCount, 'patient')}</span>
+        <span>
+          {isFetching
+            ? 'Updating…'
+            : resultCount === null
+              ? ''
+              : formatCount(resultCount, 'patient')}
+        </span>
         {hasActiveFilters(listSearch) ? (
           <Button
             variant="ghost"

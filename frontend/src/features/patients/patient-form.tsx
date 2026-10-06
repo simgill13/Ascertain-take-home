@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2Icon } from 'lucide-react'
+import { useState } from 'react'
 import { Controller, useForm, type Control, type UseFormSetError } from 'react-hook-form'
 
 import { FormField } from '@/components/form/form-field'
@@ -56,20 +57,24 @@ export function PatientForm({
   })
   const { errors } = form.formState
   const errorMessage = (field: keyof PatientFormValues) => errors[field]?.message
+  const [unmappedServerError, setUnmappedServerError] = useState<ApiError | null>(null)
 
   const submit = form.handleSubmit(async (values) => {
+    setUnmappedServerError(null)
     try {
       await onSubmit(values)
     } catch (error) {
       if (error instanceof ApiError && error.isValidationError) {
-        applyServerFieldErrors(error, form.setError)
+        const mappedCount = applyServerFieldErrors(error, form.setError)
+        if (mappedCount === 0) setUnmappedServerError(error)
       }
       // Other errors are rendered from `submitError` with a retry.
     }
   })
 
-  const showNonFieldError =
-    submitError && !(submitError instanceof ApiError && submitError.isValidationError)
+  const isFieldLevelValidation =
+    submitError instanceof ApiError && submitError.isValidationError && !unmappedServerError
+  const showNonFieldError = Boolean(submitError) && !isFieldLevelValidation
 
   return (
     <form onSubmit={submit} noValidate className="space-y-6">
@@ -307,12 +312,19 @@ function isFormField(candidate: string): candidate is keyof PatientFormValues {
   return (FORM_FIELDS as string[]).includes(candidate)
 }
 
-function applyServerFieldErrors(error: ApiError, setError: UseFormSetError<PatientFormValues>) {
+/** Returns how many server errors landed on a form field. */
+function applyServerFieldErrors(
+  error: ApiError,
+  setError: UseFormSetError<PatientFormValues>,
+): number {
+  let mappedCount = 0
   for (const fieldError of error.fieldErrors) {
     // Server locations may be nested, e.g. "allergies.2"; map them to the top-level field.
     const topLevelField = fieldError.field.split('.')[0] ?? ''
     if (isFormField(topLevelField)) {
       setError(topLevelField, { type: 'server', message: fieldError.message })
+      mappedCount += 1
     }
   }
+  return mappedCount
 }

@@ -25,7 +25,7 @@ export function LandingPage() {
     <div className="bg-background text-foreground relative min-h-dvh overflow-x-clip">
       <ParallaxBackdrop />
 
-      <header className="relative mx-auto flex max-w-6xl items-center justify-between px-6 py-5 sm:px-8">
+      <header className="relative mx-auto flex max-w-6xl items-center px-6 py-5 sm:px-8">
         <Link to="/welcome" className="flex items-center gap-2 rounded-md font-semibold">
           <span
             aria-hidden="true"
@@ -35,9 +35,6 @@ export function LandingPage() {
           </span>
           <span className="font-display text-lg tracking-tight">Northlight</span>
         </Link>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/">{LANDING_COPY.callToAction}</Link>
-        </Button>
       </header>
 
       <main className="relative">

@@ -4,10 +4,10 @@ import { ArrowLeftIcon } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { PageHeader } from '@/components/layout/page-header'
-import { ErrorState } from '@/components/state/error-state'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { patientQueryOptions } from '@/features/patients/api'
+import { PatientLoadError } from '@/features/patients/patient-detail-page'
 import { PatientForm } from '@/features/patients/patient-form'
 import {
   EMPTY_PATIENT_FORM,
@@ -69,7 +69,7 @@ export function EditPatientPage() {
           <Skeleton className="h-96" />
         </div>
       ) : patientQuery.isError ? (
-        <ErrorState error={patientQuery.error} onRetry={() => void patientQuery.refetch()} />
+        <PatientLoadError error={patientQuery.error} onRetry={() => void patientQuery.refetch()} />
       ) : (
         <EditPatientForm patient={patientQuery.data} />
       )}

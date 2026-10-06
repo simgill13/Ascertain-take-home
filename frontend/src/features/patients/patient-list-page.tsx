@@ -43,7 +43,7 @@ export function PatientListPage() {
       <PatientListToolbar
         listSearch={listSearch}
         onChange={updateSearch}
-        resultCount={listQuery.data?.total ?? 0}
+        resultCount={listQuery.isSuccess ? listQuery.data.total : null}
         isFetching={listQuery.isFetching && !listQuery.isPending}
       />
 

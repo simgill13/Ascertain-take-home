@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { createNote, deleteNote, noteKeys, type NoteInput } from '@/features/notes/api'
 import { patientKeys } from '@/features/patients/api'
 import { summaryKeys } from '@/features/summary/api'
+import { ApiError } from '@/lib/api/client'
 import { toastApiError } from '@/lib/api/describe-error'
 
 export function useNoteMutations(patientId: string) {
@@ -24,7 +25,11 @@ export function useNoteMutations(patientId: string) {
       await invalidateRelated()
       toast.success('Note added')
     },
-    onError: toastApiError,
+    onError: (error) => {
+      // Field errors are shown inline by the form; only unexpected failures need a toast.
+      if (error instanceof ApiError && error.isValidationError) return
+      toastApiError(error)
+    },
   })
 
   const removeNote = useMutation({

@@ -34,7 +34,11 @@ export function DeletePatientButton({ patient }: { patient: Patient }) {
 
   return (
     <>
-      <Button variant="outline" onClick={() => setConfirmOpen(true)}>
+      <Button
+        variant="ghost"
+        className="text-muted-foreground hover:text-destructive"
+        onClick={() => setConfirmOpen(true)}
+      >
         <Trash2Icon aria-hidden="true" />
         Delete
       </Button>

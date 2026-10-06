@@ -70,7 +70,7 @@ export function NoteForm({ onSubmit, isSubmitting }: NoteFormProps) {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="flex-1">
-          <FormField id="note-time" label="Observed at" error={errors.notedAt?.message}>
+          <FormField id="note-time" label="Visit time" error={errors.notedAt?.message}>
             {(fieldProps) => (
               <Input {...fieldProps} type="datetime-local" {...form.register('notedAt')} />
             )}

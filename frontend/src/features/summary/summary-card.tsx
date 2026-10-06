@@ -1,6 +1,18 @@
 import { useQuery } from '@tanstack/react-query'
 import { RefreshCwIcon, SparklesIcon } from 'lucide-react'
 
+const GENERATOR_LABELS: Record<string, string> = {
+  template: 'from the chart',
+  anthropic: 'by Claude',
+  openai: 'by OpenAI',
+}
+
+function describeGenerator(generatedBy: string): string {
+  const providerName = generatedBy.replace(' (fallback)', '')
+  const label = GENERATOR_LABELS[providerName] ?? `by ${providerName}`
+  return generatedBy.endsWith('(fallback)') ? `${label} (fallback)` : label
+}
+
 import { ErrorState } from '@/components/state/error-state'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -34,7 +46,7 @@ export function SummaryCard({ patientId }: SummaryCardProps) {
         </CardTitle>
         <CardDescription>
           {summary
-            ? `Generated ${formatDateTime(summary.generated_at)} by ${summary.generated_by}.`
+            ? `Generated ${formatDateTime(summary.generated_at)} ${describeGenerator(summary.generated_by)}.`
             : 'Synthesized from the profile and clinical notes.'}
         </CardDescription>
         <CardAction>
@@ -48,7 +60,7 @@ export function SummaryCard({ patientId }: SummaryCardProps) {
               className={cn(summaryQuery.isFetching && 'animate-spin')}
               aria-hidden="true"
             />
-            Regenerate
+            Refresh
           </Button>
         </CardAction>
       </CardHeader>
