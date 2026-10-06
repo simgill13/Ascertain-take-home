@@ -11,6 +11,6 @@ Evidence is a file path, endpoint, or test name. Update this after each phase.
 | 4 Notes and summary | done | `backend/app/routers/notes.py`, `services/summary/providers.py` (template, Anthropic, OpenAI with fallback), `tests/test_notes.py` (9 tests); `frontend/src/features/notes/*`, `features/summary/summary-card.tsx` |
 | 5 Patient form | done | `frontend/src/features/patients/patient-form.tsx`, `patient-form-schema.ts` (zod mirrors backend rules), `components/form/tag-input.tsx`; server 422 `errors` mapped with `setError`; network failure renders `ErrorState` with retry; `delete-patient-button.tsx` |
 | 6 Containers | files done, compose run pending Docker | `backend/Dockerfile`, `frontend/Dockerfile` + `nginx.conf` (SPA fallback, `/api/` proxy), `docker-compose.yml` (db healthcheck, migrate then serve, backend healthcheck), `docker-compose.dev.yml` (hot reload), `.env.example`. Docker is not installed on the build machine yet; `docker compose up --build` still needs to be run once |
-| 7 Tests and CI | pending | |
+| 7 Tests and CI | done | pytest 24 (`backend/tests`), Vitest 24 (`frontend/src/**/*.test.tsx`), Playwright 14 (`frontend/e2e/*.spec.ts` incl. axe on 5 screens, 320px overflow check, dark theme); `.github/workflows/ci.yml` with 6 jobs, `pr-title.yml`, `dependabot.yml`; `scripts/verify.sh` runs every section locally; timings and sharding decision in `docs/CI.md` |
 | 8 Landing page | pending | |
 | 9 Review and docs | pending | |

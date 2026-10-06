@@ -1,0 +1,33 @@
+import { expect, type Page } from '@playwright/test'
+
+export const uniqueLastName = () => `E2E${Date.now().toString(36)}`
+
+export async function fillPatientForm(page: Page, lastName: string) {
+  await page.getByLabel('First name').fill('Playwright')
+  await page.getByLabel('Last name').fill(lastName)
+  await page.getByLabel('Date of birth').fill('1988-04-12')
+  await page.getByLabel('Phone').fill('(503) 555-0123')
+  await page.getByLabel('Email', { exact: false }).fill(`${lastName.toLowerCase()}@example.com`)
+  await page.getByLabel('Street address').fill('42 Test Avenue')
+  await page.getByLabel('City').fill('Portland')
+  await page.getByLabel('State').fill('OR')
+  await page.getByLabel('Postal code').fill('97201')
+  await page.getByLabel('Allergies').fill('Latex')
+  await page.getByLabel('Allergies').press('Enter')
+  await page.getByLabel('Conditions').fill('Asthma')
+  await page.getByLabel('Conditions').press('Enter')
+}
+
+export async function createPatientThroughUi(page: Page, lastName: string) {
+  await page.goto('/patients/new')
+  await fillPatientForm(page, lastName)
+  await page.getByRole('button', { name: 'Create patient' }).click()
+  await expect(page).toHaveURL(/\/patients\/[0-9a-f-]{36}$/)
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(lastName)
+}
+
+export async function deletePatientThroughUi(page: Page) {
+  await page.getByRole('button', { name: 'Delete', exact: true }).click()
+  await page.getByRole('button', { name: 'Delete patient' }).click()
+  await expect(page).toHaveURL(/\/patients$/)
+}

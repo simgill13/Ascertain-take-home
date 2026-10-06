@@ -67,7 +67,7 @@ function PatientDetail({ patient }: { patient: Patient }) {
       </header>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card>
+        <Card role="region" aria-label="Contact">
           <CardHeader>
             <CardTitle>Contact</CardTitle>
           </CardHeader>
@@ -100,7 +100,7 @@ function PatientDetail({ patient }: { patient: Patient }) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card role="region" aria-label="Clinical">
           <CardHeader>
             <CardTitle>Clinical</CardTitle>
           </CardHeader>
@@ -123,7 +123,7 @@ function PatientDetail({ patient }: { patient: Patient }) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card role="region" aria-label="Visits">
           <CardHeader>
             <CardTitle>Visits</CardTitle>
           </CardHeader>

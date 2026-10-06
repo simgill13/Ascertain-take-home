@@ -126,28 +126,30 @@ function StatCards({ stats }: { stats: PatientStats | undefined }) {
     },
   ]
   return (
-    <dl className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+    <ul className="grid grid-cols-2 gap-4 xl:grid-cols-4" aria-label="Practice totals">
       {cards.map((card) => {
         const Icon = card.icon
         return (
-          <Card key={card.label} className="gap-2 py-4">
-            <CardContent className="flex items-start justify-between gap-2 px-4">
-              <div>
-                <dt className="text-muted-foreground text-xs font-medium">{card.label}</dt>
-                <dd className="font-display mt-1 text-3xl font-semibold tabular-nums">
-                  {card.value === undefined ? (
-                    <Skeleton className="mt-1 h-8 w-12" />
-                  ) : (
-                    card.value.toLocaleString('en-US')
-                  )}
-                </dd>
-              </div>
-              <Icon className="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
-            </CardContent>
-          </Card>
+          <li key={card.label}>
+            <Card className="h-full gap-2 py-4">
+              <CardContent className="flex items-start justify-between gap-2 px-4">
+                <div>
+                  <p className="text-muted-foreground text-xs font-medium">{card.label}</p>
+                  <p className="font-display mt-1 text-3xl font-semibold tabular-nums">
+                    {card.value === undefined ? (
+                      <Skeleton className="mt-1 h-8 w-12" />
+                    ) : (
+                      card.value.toLocaleString('en-US')
+                    )}
+                  </p>
+                </div>
+                <Icon className="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
+              </CardContent>
+            </Card>
+          </li>
         )
       })}
-    </dl>
+    </ul>
   )
 }
 

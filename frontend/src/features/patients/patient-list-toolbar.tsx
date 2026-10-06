@@ -111,7 +111,7 @@ export function PatientListToolbar({
                 value={search.sort}
                 onValueChange={(value) => onChange({ sort: value as PatientSortField, page: 1 })}
               >
-                <SelectTrigger id="patient-sort" className="w-full sm:w-40">
+                <SelectTrigger id="patient-sort" className="min-w-0 flex-1 sm:w-40 sm:flex-none">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -125,6 +125,7 @@ export function PatientListToolbar({
               <Button
                 variant="outline"
                 size="icon"
+                className="shrink-0"
                 aria-label={
                   search.order === 'asc'
                     ? 'Sorted ascending. Switch to descending'

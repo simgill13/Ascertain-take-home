@@ -40,14 +40,17 @@ run_contract() {
   echo "== api contract =="
   if [[ -f backend/pyproject.toml && -f backend/openapi.json ]]; then
     uv run --directory backend python ../scripts/export_openapi.py --check
-    npm --prefix frontend exec -- openapi-typescript ../backend/openapi.json -o src/lib/api/schema.d.ts.check
-    if ! cmp -s frontend/src/lib/api/schema.d.ts frontend/src/lib/api/schema.d.ts.check; then
-      echo "frontend/src/lib/api/schema.d.ts is stale. Regenerate it and commit the result."
-      diff -u frontend/src/lib/api/schema.d.ts frontend/src/lib/api/schema.d.ts.check || true
-      rm -f frontend/src/lib/api/schema.d.ts.check
+    local generated="frontend/src/lib/api/schema.d.ts"
+    local candidate="${generated}.check"
+    (cd frontend && npx openapi-typescript ../backend/openapi.json -o "src/lib/api/schema.d.ts.check" >/dev/null)
+    if ! cmp -s "${generated}" "${candidate}"; then
+      echo "${generated} is stale. Run 'npm --prefix frontend run generate:api' and commit the result."
+      diff -u "${generated}" "${candidate}" || true
+      rm -f "${candidate}"
       exit 1
     fi
-    rm -f frontend/src/lib/api/schema.d.ts.check
+    rm -f "${candidate}"
+    echo "schema.d.ts is current"
   fi
 }
 
