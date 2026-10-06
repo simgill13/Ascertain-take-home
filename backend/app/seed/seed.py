@@ -66,7 +66,8 @@ async def seed_if_empty(session: AsyncSession) -> int:
         logger.info("Seed skipped: %s patients already present", existing_count)
         return 0
 
-    reference = datetime.now(tz=UTC).replace(hour=9, minute=0, second=0, microsecond=0)
+    # 17:00 UTC reads as business hours (10:00 to 13:00) across US timezones.
+    reference = datetime.now(tz=UTC).replace(hour=17, minute=0, second=0, microsecond=0)
     session.add_all([build_patient(seed_patient, reference) for seed_patient in SAMPLE_PATIENTS])
     await session.commit()
     logger.info("Seeded %s patients", len(SAMPLE_PATIENTS))

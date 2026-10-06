@@ -9,7 +9,7 @@ from app.config import get_settings
 from app.database import engine, session_factory
 from app.errors import register_error_handlers
 from app.middleware.request_logging import log_request
-from app.routers import health, patients
+from app.routers import health, notes, patients
 from app.seed import seed_if_empty
 
 
@@ -42,6 +42,7 @@ def create_app() -> FastAPI:
     register_error_handlers(app)
     app.include_router(health.router)
     app.include_router(patients.router)
+    app.include_router(notes.router)
     return app
 
 

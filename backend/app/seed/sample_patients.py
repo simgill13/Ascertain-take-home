@@ -1,11 +1,9 @@
 """Sample cohort for local development. Every person and address is fictional."""
 
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date
 
 from app.models import BloodType, PatientStatus
-
-SEED_REFERENCE_DATE = datetime(2026, 10, 1, 9, 0, tzinfo=None)
 
 
 @dataclass(frozen=True)
@@ -32,10 +30,6 @@ class SeedPatient:
     conditions: list[str] = field(default_factory=list)
     last_visit_days_ago: int | None = None
     notes: list[SeedNote] = field(default_factory=list)
-
-
-def days_before(reference: datetime, days: int) -> datetime:
-    return reference - timedelta(days=days)
 
 
 SAMPLE_PATIENTS: list[SeedPatient] = [

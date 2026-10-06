@@ -7,9 +7,11 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { NotesSection } from '@/features/notes/notes-section'
 import { patientQueryOptions } from '@/features/patients/api'
 import { PatientStatusBadge } from '@/features/patients/patient-status-badge'
 import type { Patient } from '@/features/patients/types'
+import { SummaryCard } from '@/features/summary/summary-card'
 import { formatAge, formatDate, formatRelativeDate } from '@/lib/format'
 
 export function PatientDetailPage() {
@@ -128,6 +130,15 @@ function PatientDetail({ patient }: { patient: Patient }) {
             </dl>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-5">
+        <div className="xl:col-span-2">
+          <SummaryCard patientId={patient.id} />
+        </div>
+        <div className="xl:col-span-3">
+          <NotesSection patientId={patient.id} />
+        </div>
       </div>
     </div>
   )
