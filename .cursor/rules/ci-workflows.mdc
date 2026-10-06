@@ -1,0 +1,13 @@
+---
+description: Pull request checks stay reproducible and the OpenAPI contract stays committed
+globs: .github/**,scripts/verify.sh
+alwaysApply: false
+---
+
+# CI workflows
+
+- Every workflow job has a matching `scripts/verify.sh` step.
+- Pin actions to a SHA and comment the release tag.
+- Pull requests set `concurrency` and `cancel-in-progress: true`.
+- Cache uv, npm, and Playwright browsers.
+- A router or schema change refreshes `backend/openapi.json` and `frontend/src/lib/api/schema.d.ts` in the same change.

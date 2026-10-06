@@ -1,0 +1,13 @@
+---
+description: FastAPI layering, validation, and error envelope
+globs: backend/**/*.py
+alwaysApply: false
+---
+
+# FastAPI
+
+- Routers call services. Services call the database. Pydantic models are not ORM models.
+- Return `{"detail": "...", "errors": [{"field": "...", "message": "..."}]}`.
+- 422 validation, 404 missing patient or note, 400 rejected but well-formed input.
+- Do not log note text, email, phone, or address.
+- `GET /patients` accepts `search`, `status`, `sort`, `order`, `page`, `page_size`.

@@ -1,0 +1,11 @@
+---
+description: Require verification and a spec check before calling assignment work done
+alwaysApply: true
+---
+
+# Agentic workflow
+
+- Read `docs/ASSIGNMENT.md` before changing product behavior.
+- Stay inside the ownership table in `AGENTS.md`. Schema goes to `database-engineer`, API to `backend-engineer`, UI to `frontend-engineer`, workflows and the OpenAPI file to `ci-engineer`.
+- A phase is done only after `scripts/verify.sh` passes for the checks that exist and `docs/PROGRESS.md` cites evidence.
+- Project skills override vendored design skills on accessibility and reduced motion.

@@ -1,0 +1,13 @@
+---
+description: Schema changes go through migrations with a downgrade
+globs: backend/app/models/**,backend/alembic/**,backend/app/seed/**
+alwaysApply: false
+---
+
+# Database schema
+
+- Only `database-engineer` edits models, Alembic revisions, and seed data.
+- A model change ships with a revision whose `downgrade` reverses it.
+- Index `last_name`, `status`, `last_visit_at`, and `(patient_id, noted_at DESC)`.
+- `status` and `blood_type` are enums. Timestamps are `timestamptz`.
+- Notes use `ON DELETE CASCADE`. Seed is idempotent and inserts at least 20 patients.

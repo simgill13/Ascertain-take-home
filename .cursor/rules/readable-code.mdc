@@ -1,0 +1,28 @@
+---
+description: Descriptive names and small functions, without filler comments
+alwaysApply: true
+---
+
+# Readable code
+
+```python
+# Reject
+for p in rows:
+    try:
+        save(p)
+    except Exception as e:
+        log(e)
+
+# Prefer
+for patient in patients:
+    try:
+        save_patient(patient)
+    except DatabaseError as database_error:
+        logger.exception("Could not save patient %s", patient.id)
+        raise PatientSaveError(patient.id) from database_error
+```
+
+- No single-letter identifiers.
+- Domain names over `data`, `item`, `obj`, `temp`, or `flag`.
+- One job per function. Return early. Delete unused code.
+- Comment a constraint, not the next line.

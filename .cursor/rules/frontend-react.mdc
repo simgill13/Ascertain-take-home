@@ -1,0 +1,15 @@
+---
+description: React feature structure, server state, and motion limits
+globs: frontend/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# React frontend
+
+- Feature code lives in `src/features`. One query hook per resource. No `any`.
+- Search, sort, and page stay in the router search params.
+- Map 422 `errors` onto form fields. Offer retry after a network failure.
+- Import motion from `motion/react`. Animate `transform` and `opacity` only.
+- Call `useReducedMotion` in every animated component.
+- Scroll-linked and CSS 3D effects live in `src/features/landing` and load only with the lazy `/welcome` route.
+- Dashboard motion stays under 200ms and does not bind to scroll.
