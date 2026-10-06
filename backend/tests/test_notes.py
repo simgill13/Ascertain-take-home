@@ -76,16 +76,16 @@ async def test_delete_note_then_404(client: AsyncClient) -> None:
 
 
 async def test_delete_note_belonging_to_other_patient_returns_404(client: AsyncClient) -> None:
-    first_patient = await create_patient(client, last_name="First")
-    second_patient = await create_patient(client, last_name="Second")
-    note = await add_note(client, first_patient, "Belongs to first.", "2026-02-01T09:00:00Z")
+    first_patient_id = await create_patient(client, last_name="First")
+    second_patient_id = await create_patient(client, last_name="Second")
+    note = await add_note(client, first_patient_id, "Belongs to first.", "2026-02-01T09:00:00Z")
 
-    response = await client.delete(f"/patients/{second_patient}/notes/{note['id']}")
+    response = await client.delete(f"/patients/{second_patient_id}/notes/{note['id']}")
 
     assert response.status_code == 404
 
 
-async def test_deleting_patient_cascades_to_notes(client: AsyncClient) -> None:
+async def test_notes_of_deleted_patient_return_404(client: AsyncClient) -> None:
     patient_id = await create_patient(client)
     await add_note(client, patient_id, "Will be removed.", "2026-02-01T09:00:00Z")
 

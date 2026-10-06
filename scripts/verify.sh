@@ -42,14 +42,13 @@ run_contract() {
     uv run --directory backend python ../scripts/export_openapi.py --check
     local generated="frontend/src/lib/api/schema.d.ts"
     local candidate="${generated}.check"
-    (cd frontend && npx openapi-typescript ../backend/openapi.json -o "src/lib/api/schema.d.ts.check" >/dev/null)
+    trap 'rm -f "${candidate}"' RETURN
+    (cd frontend && npx openapi-typescript ../backend/openapi.json -o "../${candidate}" >/dev/null)
     if ! cmp -s "${generated}" "${candidate}"; then
       echo "${generated} is stale. Run 'npm --prefix frontend run generate:api' and commit the result."
       diff -u "${generated}" "${candidate}" || true
-      rm -f "${candidate}"
       exit 1
     fi
-    rm -f "${candidate}"
     echo "schema.d.ts is current"
   fi
 }
@@ -70,6 +69,7 @@ case "${SECTION}" in
   contract) run_contract ;;
   e2e) run_e2e ;;
   all)
+    # e2e needs running servers and Playwright browsers; run it explicitly with `verify.sh e2e`.
     run_lint
     run_backend
     run_frontend

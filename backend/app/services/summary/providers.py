@@ -16,6 +16,7 @@ from app.schemas.patient import calculate_age
 logger = logging.getLogger(__name__)
 
 LLM_TIMEOUT_SECONDS = 20.0
+MAX_NARRATIVE_TOKENS = 600
 MAX_NOTES_IN_PROMPT = 12
 DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-5"
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
@@ -35,12 +36,12 @@ class SummaryProvider(Protocol):
     async def narrative(self, patient: Patient, notes: list[PatientNote]) -> str: ...
 
 
-def join_naturally(items: list[str]) -> str:
-    if not items:
+def join_naturally(phrases: list[str]) -> str:
+    if not phrases:
         return ""
-    if len(items) == 1:
-        return items[0]
-    return f"{', '.join(items[:-1])} and {items[-1]}"
+    if len(phrases) == 1:
+        return phrases[0]
+    return f"{', '.join(phrases[:-1])} and {phrases[-1]}"
 
 
 class TemplateSummaryProvider:
@@ -147,7 +148,7 @@ class AnthropicSummaryProvider:
                 },
                 json={
                     "model": self.model,
-                    "max_tokens": 600,
+                    "max_tokens": MAX_NARRATIVE_TOKENS,
                     "system": SYSTEM_PROMPT,
                     "messages": [{"role": "user", "content": build_prompt(patient, notes)}],
                 },
@@ -171,7 +172,7 @@ class OpenAISummaryProvider:
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 json={
                     "model": self.model,
-                    "max_tokens": 600,
+                    "max_tokens": MAX_NARRATIVE_TOKENS,
                     "messages": [
                         {"role": "system", "content": SYSTEM_PROMPT},
                         {"role": "user", "content": build_prompt(patient, notes)},

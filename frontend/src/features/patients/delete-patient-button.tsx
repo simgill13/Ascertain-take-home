@@ -14,10 +14,10 @@ import {
 } from '@/components/ui/dialog'
 import type { Patient } from '@/features/patients/types'
 import { usePatientMutations } from '@/features/patients/use-patient-mutations'
-import { describeError } from '@/lib/api/describe-error'
+import { toastApiError } from '@/lib/api/describe-error'
 
 export function DeletePatientButton({ patient }: { patient: Patient }) {
-  const [open, setOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const navigate = useNavigate()
   const { remove } = usePatientMutations()
   const fullName = `${patient.first_name} ${patient.last_name}`
@@ -28,20 +28,17 @@ export function DeletePatientButton({ patient }: { patient: Patient }) {
         toast.success(`${fullName} was removed`)
         await navigate({ to: '/patients' })
       },
-      onError: (error) => {
-        const described = describeError(error)
-        toast.error(described.title, { description: described.message })
-      },
+      onError: toastApiError,
     })
   }
 
   return (
     <>
-      <Button variant="outline" onClick={() => setOpen(true)}>
+      <Button variant="outline" onClick={() => setConfirmOpen(true)}>
         <Trash2Icon aria-hidden="true" />
         Delete
       </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete {fullName}?</DialogTitle>
@@ -51,7 +48,11 @@ export function DeletePatientButton({ patient }: { patient: Patient }) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={remove.isPending}>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmOpen(false)}
+              disabled={remove.isPending}
+            >
               Keep patient
             </Button>
             <Button variant="destructive" onClick={confirmDelete} disabled={remove.isPending}>

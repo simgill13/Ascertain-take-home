@@ -10,17 +10,26 @@ import {
 const MAX_AGE_YEARS = 130
 const MIN_PHONE_DIGITS = 7
 const MAX_TAGS = 50
+const MAX_TAG_LENGTH = 120
 
-const requiredText = (label: string, max: number) =>
+export const UNKNOWN_BLOOD_TYPE = 'unknown'
+
+const requiredText = (label: string, maxLength: number) =>
   z
     .string()
     .trim()
     .min(1, `${label} is required.`)
-    .max(max, `${label} must be ${max} characters or fewer.`)
+    .max(maxLength, `${label} must be ${maxLength} characters or fewer.`)
 
-const optionalText = (max: number) => z.string().trim().max(max)
+const optionalText = (maxLength: number) => z.string().trim().max(maxLength)
 
-export const UNKNOWN_BLOOD_TYPE = 'unknown'
+const tagList = (label: string) =>
+  z
+    .array(z.string().trim().min(1).max(MAX_TAG_LENGTH))
+    .max(MAX_TAGS, `Add at most ${MAX_TAGS} ${label}.`)
+
+// Date inputs give `YYYY-MM-DD`; parsing at local midnight avoids timezone day shifts.
+const parseDateOnly = (value: string) => new Date(`${value}T00:00:00`)
 
 function ageInYears(dateOfBirth: Date, today: Date): number {
   const hadBirthday =
@@ -35,16 +44,10 @@ export const patientFormSchema = z.object({
   date_of_birth: z
     .string()
     .min(1, 'Date of birth is required.')
+    .refine((value) => !Number.isNaN(parseDateOnly(value).getTime()), 'Enter a valid date.')
+    .refine((value) => parseDateOnly(value) <= new Date(), 'Date of birth cannot be in the future.')
     .refine(
-      (value) => !Number.isNaN(new Date(`${value}T00:00:00`).getTime()),
-      'Enter a valid date.',
-    )
-    .refine(
-      (value) => new Date(`${value}T00:00:00`) <= new Date(),
-      'Date of birth cannot be in the future.',
-    )
-    .refine(
-      (value) => ageInYears(new Date(`${value}T00:00:00`), new Date()) <= MAX_AGE_YEARS,
+      (value) => ageInYears(parseDateOnly(value), new Date()) <= MAX_AGE_YEARS,
       `Date of birth implies an age over ${MAX_AGE_YEARS}.`,
     ),
   email: z.union([z.literal(''), z.email('Enter a valid email address.')]),
@@ -64,12 +67,8 @@ export const patientFormSchema = z.object({
   postal_code: requiredText('Postal code', 20).min(3, 'Postal code must be at least 3 characters.'),
   blood_type: z.enum([UNKNOWN_BLOOD_TYPE, ...BLOOD_TYPES]),
   status: z.enum(PATIENT_STATUSES),
-  allergies: z
-    .array(z.string().trim().min(1).max(120))
-    .max(MAX_TAGS, `Add at most ${MAX_TAGS} allergies.`),
-  conditions: z
-    .array(z.string().trim().min(1).max(120))
-    .max(MAX_TAGS, `Add at most ${MAX_TAGS} conditions.`),
+  allergies: tagList('allergies'),
+  conditions: tagList('conditions'),
 })
 
 export type PatientFormValues = z.infer<typeof patientFormSchema>

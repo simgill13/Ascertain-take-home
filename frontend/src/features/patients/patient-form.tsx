@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2Icon } from 'lucide-react'
-import { Controller, useForm, type UseFormSetError } from 'react-hook-form'
+import { Controller, useForm, type Control, type UseFormSetError } from 'react-hook-form'
 
 import { FormField } from '@/components/form/form-field'
 import { TagInput } from '@/components/form/tag-input'
@@ -22,6 +22,15 @@ import {
 } from '@/features/patients/patient-form-schema'
 import { BLOOD_TYPES, PATIENT_STATUSES, STATUS_LABELS } from '@/features/patients/types'
 import { ApiError } from '@/lib/api/client'
+
+const BLOOD_TYPE_OPTIONS = [
+  { value: UNKNOWN_BLOOD_TYPE, label: 'Unknown' },
+  ...BLOOD_TYPES.map((bloodType) => ({ value: bloodType, label: bloodType })),
+]
+const STATUS_OPTIONS = PATIENT_STATUSES.map((status) => ({
+  value: status,
+  label: STATUS_LABELS[status],
+}))
 
 type PatientFormProps = {
   defaultValues: PatientFormValues
@@ -55,7 +64,7 @@ export function PatientForm({
       if (error instanceof ApiError && error.isValidationError) {
         applyServerFieldErrors(error, form.setError)
       }
-      // Other errors are rendered from `submitError` by the parent with a retry.
+      // Other errors are rendered from `submitError` with a retry.
     }
   })
 
@@ -166,109 +175,34 @@ export function PatientForm({
           <CardDescription>Blood type, record status, allergies, and conditions.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          <Controller
+          <SelectField
             control={form.control}
             name="blood_type"
-            render={({ field }) => (
-              <FormField id="blood_type" label="Blood type" error={errorMessage('blood_type')}>
-                {(fieldProps) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger
-                      id={fieldProps.id}
-                      aria-invalid={fieldProps['aria-invalid']}
-                      aria-describedby={fieldProps['aria-describedby']}
-                      className="w-full"
-                      onBlur={field.onBlur}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={UNKNOWN_BLOOD_TYPE}>Unknown</SelectItem>
-                      {BLOOD_TYPES.map((bloodType) => (
-                        <SelectItem key={bloodType} value={bloodType}>
-                          {bloodType}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </FormField>
-            )}
+            label="Blood type"
+            options={BLOOD_TYPE_OPTIONS}
+            error={errorMessage('blood_type')}
           />
-          <Controller
+          <SelectField
             control={form.control}
             name="status"
-            render={({ field }) => (
-              <FormField id="status" label="Status" error={errorMessage('status')}>
-                {(fieldProps) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger
-                      id={fieldProps.id}
-                      aria-invalid={fieldProps['aria-invalid']}
-                      aria-describedby={fieldProps['aria-describedby']}
-                      className="w-full"
-                      onBlur={field.onBlur}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PATIENT_STATUSES.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {STATUS_LABELS[status]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </FormField>
-            )}
+            label="Status"
+            options={STATUS_OPTIONS}
+            error={errorMessage('status')}
           />
-          <Controller
+          <TagField
             control={form.control}
             name="allergies"
-            render={({ field }) => (
-              <FormField
-                id="allergies"
-                label="Allergies"
-                hint="Press Enter or type a comma after each allergy."
-                error={errorMessage('allergies')}
-              >
-                {(fieldProps) => (
-                  <TagInput
-                    id={fieldProps.id}
-                    value={field.value}
-                    onChange={field.onChange}
-                    describedBy={fieldProps['aria-describedby']}
-                    invalid={fieldProps['aria-invalid']}
-                    placeholder="e.g. Penicillin"
-                    variant="allergy"
-                  />
-                )}
-              </FormField>
-            )}
+            label="Allergies"
+            placeholder="e.g. Penicillin"
+            variant="allergy"
+            error={errorMessage('allergies')}
           />
-          <Controller
+          <TagField
             control={form.control}
             name="conditions"
-            render={({ field }) => (
-              <FormField
-                id="conditions"
-                label="Conditions"
-                hint="Press Enter or type a comma after each condition."
-                error={errorMessage('conditions')}
-              >
-                {(fieldProps) => (
-                  <TagInput
-                    id={fieldProps.id}
-                    value={field.value}
-                    onChange={field.onChange}
-                    describedBy={fieldProps['aria-describedby']}
-                    invalid={fieldProps['aria-invalid']}
-                    placeholder="e.g. Hypertension"
-                  />
-                )}
-              </FormField>
-            )}
+            label="Conditions"
+            placeholder="e.g. Hypertension"
+            error={errorMessage('conditions')}
           />
         </CardContent>
       </Card>
@@ -291,6 +225,79 @@ export function PatientForm({
         </Button>
       </div>
     </form>
+  )
+}
+
+type SelectFieldProps = {
+  control: Control<PatientFormValues>
+  name: 'blood_type' | 'status'
+  label: string
+  options: ReadonlyArray<{ value: string; label: string }>
+  error?: string
+}
+
+function SelectField({ control, name, label, options, error }: SelectFieldProps) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormField id={name} label={label} error={error}>
+          {(fieldProps) => (
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger {...fieldProps} className="w-full" onBlur={field.onBlur}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </FormField>
+      )}
+    />
+  )
+}
+
+type TagFieldProps = {
+  control: Control<PatientFormValues>
+  name: 'allergies' | 'conditions'
+  label: string
+  placeholder: string
+  variant?: 'default' | 'allergy'
+  error?: string
+}
+
+function TagField({ control, name, label, placeholder, variant, error }: TagFieldProps) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormField
+          id={name}
+          label={label}
+          hint={`Press Enter or type a comma after each ${label.toLowerCase().replace(/s$/, '')}.`}
+          error={error}
+        >
+          {(fieldProps) => (
+            <TagInput
+              id={fieldProps.id}
+              value={field.value}
+              onChange={field.onChange}
+              describedBy={fieldProps['aria-describedby']}
+              invalid={fieldProps['aria-invalid']}
+              placeholder={placeholder}
+              variant={variant}
+            />
+          )}
+        </FormField>
+      )}
+    />
   )
 }
 

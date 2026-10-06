@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 type TagInputProps = {
   id: string
   value: string[]
-  onChange: (next: string[]) => void
+  onChange: (nextTags: string[]) => void
   placeholder?: string
   describedBy?: string
   invalid?: boolean
@@ -15,8 +15,8 @@ type TagInputProps = {
 }
 
 /**
- * Enter or comma adds the typed text as a tag; Backspace on an empty field removes the last tag.
- * Duplicates are ignored case-insensitively.
+ * Enter or a trailing comma adds the typed text as a tag; Backspace on an empty field removes
+ * the last tag. Duplicates are ignored case-insensitively.
  */
 export function TagInput({
   id,
@@ -29,16 +29,28 @@ export function TagInput({
 }: TagInputProps) {
   const [draft, setDraft] = useState('')
 
-  const addDraft = () => {
-    const candidate = draft.trim().replace(/,+$/, '').trim()
+  const commitTag = (rawText: string) => {
+    const candidate = rawText.replace(/,/g, '').trim()
+    setDraft('')
     if (!candidate) return
     const alreadyPresent = value.some((tag) => tag.toLowerCase() === candidate.toLowerCase())
     if (!alreadyPresent) onChange([...value, candidate])
-    setDraft('')
   }
 
   const removeTag = (tagToRemove: string) => {
     onChange(value.filter((tag) => tag !== tagToRemove))
+  }
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      commitTag(draft)
+      return
+    }
+    const lastTag = value.at(-1)
+    if (event.key === 'Backspace' && draft === '' && lastTag !== undefined) {
+      removeTag(lastTag)
+    }
   }
 
   return (
@@ -73,23 +85,15 @@ export function TagInput({
         aria-invalid={invalid}
         autoComplete="off"
         onChange={(event) => {
-          if (event.target.value.endsWith(',')) {
-            setDraft(event.target.value)
-            queueMicrotask(addDraft)
+          const typed = event.target.value
+          if (typed.endsWith(',')) {
+            commitTag(typed)
             return
           }
-          setDraft(event.target.value)
+          setDraft(typed)
         }}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault()
-            addDraft()
-          }
-          if (event.key === 'Backspace' && draft === '' && value.length > 0) {
-            removeTag(value[value.length - 1] as string)
-          }
-        }}
-        onBlur={addDraft}
+        onKeyDown={handleKeyDown}
+        onBlur={() => commitTag(draft)}
       />
     </div>
   )

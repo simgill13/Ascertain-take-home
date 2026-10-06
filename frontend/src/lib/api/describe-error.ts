@@ -1,3 +1,5 @@
+import { toast } from 'sonner'
+
 import { ApiError, NetworkError } from '@/lib/api/client'
 
 export type DescribedError = { title: string; message: string }
@@ -16,4 +18,9 @@ export function describeError(error: unknown): DescribedError {
     title: 'Something went wrong',
     message: error instanceof Error ? error.message : 'An unexpected error occurred.',
   }
+}
+
+export function toastApiError(error: unknown) {
+  const described = describeError(error)
+  toast.error(described.title, { description: described.message })
 }

@@ -15,12 +15,12 @@ class NoteCreate(ApiModel):
 
     @field_validator("noted_at")
     @classmethod
-    def noted_at_not_in_future(cls, value: datetime) -> datetime:
-        if value.tzinfo is None:
-            value = value.replace(tzinfo=UTC)
-        if value > datetime.now(tz=UTC):
+    def noted_at_not_in_future(cls, noted_at: datetime) -> datetime:
+        if noted_at.tzinfo is None:
+            noted_at = noted_at.replace(tzinfo=UTC)
+        if noted_at > datetime.now(tz=UTC):
             raise ValueError("Note time cannot be in the future.")
-        return value
+        return noted_at
 
 
 class NoteRead(ApiModel):

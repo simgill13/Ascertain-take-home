@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import PatientNote
@@ -49,9 +49,3 @@ async def delete_note(session: AsyncSession, patient_id: uuid.UUID, note_id: uui
         raise note_not_found(note_id)
     await session.delete(note)
     await session.commit()
-
-
-async def count_notes(session: AsyncSession, patient_id: uuid.UUID) -> int:
-    return (
-        await session.scalar(select(func.count()).where(PatientNote.patient_id == patient_id))
-    ) or 0

@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { createNote, deleteNote, noteKeys, type NoteInput } from '@/features/notes/api'
 import { patientKeys } from '@/features/patients/api'
 import { summaryKeys } from '@/features/summary/api'
-import { describeError } from '@/lib/api/describe-error'
+import { toastApiError } from '@/lib/api/describe-error'
 
 export function useNoteMutations(patientId: string) {
   const queryClient = useQueryClient()
@@ -24,10 +24,7 @@ export function useNoteMutations(patientId: string) {
       await invalidateRelated()
       toast.success('Note added')
     },
-    onError: (error) => {
-      const described = describeError(error)
-      toast.error(described.title, { description: described.message })
-    },
+    onError: toastApiError,
   })
 
   const removeNote = useMutation({
@@ -36,10 +33,7 @@ export function useNoteMutations(patientId: string) {
       await invalidateRelated()
       toast.success('Note deleted')
     },
-    onError: (error) => {
-      const described = describeError(error)
-      toast.error(described.title, { description: described.message })
-    },
+    onError: toastApiError,
   })
 
   return { addNote, removeNote }

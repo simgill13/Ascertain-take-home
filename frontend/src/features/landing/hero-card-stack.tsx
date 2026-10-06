@@ -13,9 +13,9 @@ import { Badge } from '@/components/ui/badge'
 import { SAMPLE_CARDS } from '@/features/landing/landing-copy'
 
 const CARD_OFFSETS = [
-  { x: 0, y: 0, rotateZ: 0, depth: 0 },
-  { x: 28, y: 36, rotateZ: 3, depth: -70 },
-  { x: 56, y: 72, rotateZ: 6, depth: -140 },
+  { shiftX: 0, shiftY: 0, rotateZ: 0, depth: 0 },
+  { shiftX: 28, shiftY: 36, rotateZ: 3, depth: -70 },
+  { shiftX: 56, shiftY: 72, rotateZ: 6, depth: -140 },
 ] as const
 
 // Scroll fans the stack open and pulls it toward the camera; the pointer adds a small tilt.
@@ -23,6 +23,9 @@ const SCROLL_ROTATE_X = [14, -4]
 const SCROLL_ROTATE_Y = [-18, 6]
 const SCROLL_SPREAD = [1, 1.6]
 const MAX_TILT_DEGREES = 6
+// Pose shown when the visitor prefers reduced motion.
+const STATIC_ROTATE_X = 6
+const STATIC_ROTATE_Y = -8
 
 export function HeroCardStack() {
   const reduceMotion = useReducedMotion()
@@ -44,12 +47,12 @@ export function HeroCardStack() {
   const rotateX = useTransform(
     [scrollRotateX, springTiltX],
     ([fromScroll, fromPointer]: number[]) =>
-      reduceMotion ? 6 : (fromScroll ?? 0) + (fromPointer ?? 0),
+      reduceMotion ? STATIC_ROTATE_X : (fromScroll ?? 0) + (fromPointer ?? 0),
   )
   const rotateY = useTransform(
     [scrollRotateY, springTiltY],
     ([fromScroll, fromPointer]: number[]) =>
-      reduceMotion ? -8 : (fromScroll ?? 0) + (fromPointer ?? 0),
+      reduceMotion ? STATIC_ROTATE_Y : (fromScroll ?? 0) + (fromPointer ?? 0),
   )
 
   const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -84,6 +87,7 @@ export function HeroCardStack() {
             key={card.name}
             card={card}
             offset={CARD_OFFSETS[cardIndex] ?? CARD_OFFSETS[0]}
+            stackPosition={cardIndex}
             spread={spread}
             reduceMotion={Boolean(reduceMotion)}
             entranceDelay={0.15 * (SAMPLE_CARDS.length - cardIndex)}
@@ -98,14 +102,32 @@ type StackedCardProps = {
   card: (typeof SAMPLE_CARDS)[number]
   offset: (typeof CARD_OFFSETS)[number]
   spread: MotionValue<number>
+  stackPosition: number
   reduceMotion: boolean
   entranceDelay: number
 }
 
-function StackedCard({ card, offset, spread, reduceMotion, entranceDelay }: StackedCardProps) {
-  const translateX = useTransform(spread, (value) => offset.x * (reduceMotion ? 1 : value))
-  const translateY = useTransform(spread, (value) => offset.y * (reduceMotion ? 1 : value))
-  const translateZ = useTransform(spread, (value) => offset.depth * (reduceMotion ? 1 : value))
+function StackedCard({
+  card,
+  offset,
+  spread,
+  stackPosition,
+  reduceMotion,
+  entranceDelay,
+}: StackedCardProps) {
+  const effectiveSpread = (spreadFactor: number) => (reduceMotion ? 1 : spreadFactor)
+  const translateX = useTransform(
+    spread,
+    (spreadFactor) => offset.shiftX * effectiveSpread(spreadFactor),
+  )
+  const translateY = useTransform(
+    spread,
+    (spreadFactor) => offset.shiftY * effectiveSpread(spreadFactor),
+  )
+  const translateZ = useTransform(
+    spread,
+    (spreadFactor) => offset.depth * effectiveSpread(spreadFactor),
+  )
 
   return (
     <motion.article
@@ -115,9 +137,9 @@ function StackedCard({ card, offset, spread, reduceMotion, entranceDelay }: Stac
         y: translateY,
         z: translateZ,
         rotateZ: offset.rotateZ,
-        zIndex: 10 - Math.round(Math.abs(offset.depth) / 70),
+        zIndex: SAMPLE_CARDS.length - stackPosition,
       }}
-      initial={reduceMotion ? false : { opacity: 0, y: offset.y + 40 }}
+      initial={reduceMotion ? false : { opacity: 0, y: offset.shiftY + 40 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6, delay: entranceDelay, ease: [0.22, 1, 0.36, 1] }}
     >

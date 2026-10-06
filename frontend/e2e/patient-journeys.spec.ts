@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test'
 
-import { createPatientThroughUi, deletePatientThroughUi, uniqueLastName } from './helpers'
+import {
+  createPatientThroughUi,
+  deletePatientThroughUi,
+  fillPatientForm,
+  uniqueLastName,
+} from './helpers'
 
 test.describe('coordinator journeys', () => {
   test('dashboard shows practice totals and links to the patient list', async ({ page }) => {
@@ -21,16 +26,16 @@ test.describe('coordinator journeys', () => {
     await page.goto('/patients')
     await expect(page.getByRole('table', { name: 'Patients' })).toBeVisible()
 
-    const search = page.getByLabel('Search')
-    await search.pressSequentially('alvar', { delay: 20 })
-    await expect(search).toHaveValue('alvar')
+    const searchBox = page.getByLabel('Search')
+    await searchBox.pressSequentially('alvar', { delay: 20 })
+    await expect(searchBox).toHaveValue('alvar')
 
     await expect(page).toHaveURL(/search=alvar/)
     await expect(page.getByRole('link', { name: 'Alvarez, Maria' })).toBeVisible()
     await expect(page.getByText('1 patient', { exact: true })).toBeVisible()
 
     await page.getByRole('button', { name: 'Clear filters' }).click()
-    await expect(search).toHaveValue('')
+    await expect(searchBox).toHaveValue('')
     await expect(page).not.toHaveURL(/search=/)
   })
 
@@ -86,9 +91,9 @@ test.describe('coordinator journeys', () => {
         .getByText('Intake call completed. Records requested.'),
     ).toBeVisible()
 
-    const summary = page.locator('#summary')
-    await expect(summary).toContainText('Intake call completed')
-    await expect(summary).toContainText('Latex')
+    const summaryCard = page.locator('#summary')
+    await expect(summaryCard).toContainText('Intake call completed')
+    await expect(summaryCard).toContainText('Latex')
 
     await deletePatientThroughUi(page)
   })
@@ -119,7 +124,6 @@ test.describe('coordinator journeys', () => {
       })
     })
     await page.goto('/patients/new')
-    const { fillPatientForm } = await import('./helpers')
     await fillPatientForm(page, uniqueLastName())
 
     await page.getByRole('button', { name: 'Create patient' }).click()
@@ -132,11 +136,11 @@ test.describe('coordinator journeys', () => {
     await page.route('**/api/patients?*', (route) => route.abort('connectionrefused'))
     await page.goto('/patients')
 
-    const alert = page.getByRole('alert')
-    await expect(alert).toContainText('Connection problem')
+    const connectionAlert = page.getByRole('alert')
+    await expect(connectionAlert).toContainText('Connection problem')
     await page.unroute('**/api/patients?*')
 
-    await alert.getByRole('button', { name: 'Try again' }).click()
+    await connectionAlert.getByRole('button', { name: 'Try again' }).click()
     await expect(page.getByRole('table', { name: 'Patients' })).toBeVisible()
   })
 })

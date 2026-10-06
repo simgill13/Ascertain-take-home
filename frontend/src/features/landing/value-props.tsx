@@ -3,24 +3,26 @@ import { SearchIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { LANDING_COPY } from '@/features/landing/landing-copy'
 
-const FRAGMENTS = [FindFragment, ReadFragment, WriteFragment]
+const ILLUSTRATIONS = [FindIllustration, ReadIllustration, WriteIllustration]
 
 export function ValueProps() {
   return (
     <ul className="grid gap-10 md:grid-cols-3 md:gap-8">
-      {LANDING_COPY.valueProps.map((prop, propIndex) => {
-        const Fragment = FRAGMENTS[propIndex] ?? FindFragment
+      {LANDING_COPY.valueProps.map((valueProp, valuePropIndex) => {
+        const Illustration = ILLUSTRATIONS[valuePropIndex] ?? FindIllustration
         return (
-          <li key={prop.title} className="flex flex-col gap-4">
+          <li key={valueProp.title} className="flex flex-col gap-4">
             <div
               className="bg-card flex h-36 flex-col justify-center rounded-xl border p-4"
               aria-hidden="true"
             >
-              <Fragment />
+              <Illustration />
             </div>
             <div>
-              <h2 className="font-display text-xl font-semibold">{prop.title}</h2>
-              <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">{prop.body}</p>
+              <h2 className="font-display text-xl font-semibold">{valueProp.title}</h2>
+              <p className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
+                {valueProp.body}
+              </p>
             </div>
           </li>
         )
@@ -29,7 +31,7 @@ export function ValueProps() {
   )
 }
 
-function FindFragment() {
+function FindIllustration() {
   return (
     <div className="space-y-2">
       <div className="bg-background text-muted-foreground flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
@@ -47,7 +49,7 @@ function FindFragment() {
   )
 }
 
-function ReadFragment() {
+function ReadIllustration() {
   return (
     <div className="space-y-2 text-sm">
       <div className="flex flex-wrap gap-1.5">
@@ -62,7 +64,7 @@ function ReadFragment() {
   )
 }
 
-function WriteFragment() {
+function WriteIllustration() {
   return (
     <div className="space-y-2 text-sm">
       <p className="text-muted-foreground text-xs">Oct 6, 2026, 4:17 PM</p>

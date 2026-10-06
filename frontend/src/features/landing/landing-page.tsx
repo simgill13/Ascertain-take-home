@@ -59,12 +59,7 @@ export function LandingPage() {
               {LANDING_COPY.subheadline}
             </motion.p>
             <motion.div className="mt-10" {...entrance(0.24)}>
-              <Button asChild size="lg" className="h-12 px-6 text-base">
-                <Link to="/">
-                  {LANDING_COPY.callToAction}
-                  <ArrowRightIcon aria-hidden="true" />
-                </Link>
-              </Button>
+              <CallToActionButton />
             </motion.div>
           </div>
 
@@ -84,12 +79,7 @@ export function LandingPage() {
             <p className="font-display text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
               {LANDING_COPY.closingLine}
             </p>
-            <Button asChild size="lg" className="h-12 px-6 text-base">
-              <Link to="/">
-                {LANDING_COPY.callToAction}
-                <ArrowRightIcon aria-hidden="true" />
-              </Link>
-            </Button>
+            <CallToActionButton />
           </div>
         </section>
       </main>
@@ -98,5 +88,16 @@ export function LandingPage() {
         {LANDING_COPY.practiceName}. Sample data only; every patient shown is fictional.
       </footer>
     </div>
+  )
+}
+
+function CallToActionButton() {
+  return (
+    <Button asChild size="lg" className="h-12 px-6 text-base">
+      <Link to="/">
+        {LANDING_COPY.callToAction}
+        <ArrowRightIcon aria-hidden="true" />
+      </Link>
+    </Button>
   )
 }

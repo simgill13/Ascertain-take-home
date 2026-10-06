@@ -23,9 +23,9 @@ export function NewPatientPage() {
   const { create } = usePatientMutations()
 
   const handleSubmit = async (values: PatientFormValues) => {
-    const created = await create.mutateAsync(formValuesToPayload(values))
-    toast.success(`${created.first_name} ${created.last_name} added`)
-    await navigate({ to: '/patients/$patientId', params: { patientId: created.id } })
+    const createdPatient = await create.mutateAsync(formValuesToPayload(values))
+    toast.success(`${createdPatient.first_name} ${createdPatient.last_name} added`)
+    await navigate({ to: '/patients/$patientId', params: { patientId: createdPatient.id } })
   }
 
   return (

@@ -14,8 +14,8 @@ export function usePatientMutations() {
 
   const create = useMutation({
     mutationFn: (payload: PatientInput) => createPatient(payload),
-    onSuccess: async (created: Patient) => {
-      queryClient.setQueryData(patientKeys.detail(created.id), created)
+    onSuccess: async (createdPatient: Patient) => {
+      queryClient.setQueryData(patientKeys.detail(createdPatient.id), createdPatient)
       await invalidateLists()
     },
   })
@@ -23,8 +23,8 @@ export function usePatientMutations() {
   const update = useMutation({
     mutationFn: ({ patientId, payload }: { patientId: string; payload: PatientInput }) =>
       updatePatient(patientId, payload),
-    onSuccess: async (updated: Patient) => {
-      queryClient.setQueryData(patientKeys.detail(updated.id), updated)
+    onSuccess: async (updatedPatient: Patient) => {
+      queryClient.setQueryData(patientKeys.detail(updatedPatient.id), updatedPatient)
       await invalidateLists()
     },
   })
