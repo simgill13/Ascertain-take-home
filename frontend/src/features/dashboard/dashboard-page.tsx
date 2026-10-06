@@ -18,8 +18,8 @@ const RECENT_VISITS_SEARCH = {
   ...DEFAULT_PATIENT_LIST_SEARCH,
   sort: 'last_visit',
   order: 'desc',
-  pageSize: 25,
 } as const
+const RECENT_VISITS_SHOWN = 6
 
 const STATUS_BAR_CLASS: Record<PatientStatus, string> = {
   active: 'bg-status-active',
@@ -30,7 +30,7 @@ const STATUS_BAR_CLASS: Record<PatientStatus, string> = {
 
 export function DashboardPage() {
   const statsQuery = useQuery(patientStatsQueryOptions())
-  const recentQuery = useQuery(patientListQueryOptions(RECENT_VISITS_SEARCH))
+  const recentVisitsQuery = useQuery(patientListQueryOptions(RECENT_VISITS_SEARCH))
 
   return (
     <>
@@ -79,15 +79,18 @@ export function DashboardPage() {
             </CardAction>
           </CardHeader>
           <CardContent>
-            {recentQuery.isError ? (
-              <ErrorState error={recentQuery.error} onRetry={() => void recentQuery.refetch()} />
-            ) : recentQuery.isPending ? (
+            {recentVisitsQuery.isError ? (
+              <ErrorState
+                error={recentVisitsQuery.error}
+                onRetry={() => void recentVisitsQuery.refetch()}
+              />
+            ) : recentVisitsQuery.isPending ? (
               <Skeleton className="h-40" aria-label="Loading recent visits" />
             ) : (
               <ul className="divide-y">
-                {recentQuery.data.items
+                {recentVisitsQuery.data.items
                   .filter((patient) => patient.last_visit_at)
-                  .slice(0, 6)
+                  .slice(0, RECENT_VISITS_SHOWN)
                   .map((patient) => (
                     <li key={patient.id} className="flex items-center justify-between gap-3 py-2.5">
                       <div className="min-w-0">
@@ -154,26 +157,26 @@ function StatCards({ stats }: { stats: PatientStats | undefined }) {
 }
 
 function StatusChart({ stats }: { stats: PatientStats }) {
-  const largest = Math.max(1, ...stats.by_status.map((entry) => entry.count))
+  const largestCount = Math.max(1, ...stats.by_status.map((statusCount) => statusCount.count))
   return (
     <ul className="space-y-3" aria-label="Patient count by status">
-      {stats.by_status.map((entry) => {
-        const widthPercent = Math.round((entry.count / largest) * 100)
+      {stats.by_status.map((statusCount) => {
+        const widthPercent = Math.round((statusCount.count / largestCount) * 100)
         return (
-          <li key={entry.status} className="text-sm">
+          <li key={statusCount.status} className="text-sm">
             <div className="mb-1 flex items-center justify-between">
-              <span>{STATUS_LABELS[entry.status]}</span>
-              <span className="text-muted-foreground tabular-nums">{entry.count}</span>
+              <span>{STATUS_LABELS[statusCount.status]}</span>
+              <span className="text-muted-foreground tabular-nums">{statusCount.count}</span>
             </div>
             <div
               role="img"
-              aria-label={`${STATUS_LABELS[entry.status]}: ${entry.count} of ${stats.total}`}
+              aria-label={`${STATUS_LABELS[statusCount.status]}: ${statusCount.count} of ${stats.total}`}
               className="bg-muted h-2.5 overflow-hidden rounded-full"
             >
               <div
                 className={cn(
                   'h-full rounded-full transition-[width] duration-200',
-                  STATUS_BAR_CLASS[entry.status],
+                  STATUS_BAR_CLASS[statusCount.status],
                 )}
                 style={{ width: `${widthPercent}%` }}
               />

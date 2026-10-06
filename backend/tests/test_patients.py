@@ -93,12 +93,12 @@ async def test_list_paginates_and_reports_totals(client: AsyncClient) -> None:
     first_body = first_page.json()
     assert first_body["total"] == 7
     assert first_body["total_pages"] == 3
-    assert [item["last_name"] for item in first_body["items"]] == [
+    assert [patient["last_name"] for patient in first_body["items"]] == [
         "Patient00",
         "Patient01",
         "Patient02",
     ]
-    assert [item["last_name"] for item in last_page.json()["items"]] == ["Patient06"]
+    assert [patient["last_name"] for patient in last_page.json()["items"]] == ["Patient06"]
 
 
 async def test_list_searches_full_name_case_insensitively(client: AsyncClient) -> None:
@@ -107,7 +107,7 @@ async def test_list_searches_full_name_case_insensitively(client: AsyncClient) -
 
     response = await client.get("/patients", params={"search": "maria alv"})
 
-    assert [item["last_name"] for item in response.json()["items"]] == ["Alvarez"]
+    assert [patient["last_name"] for patient in response.json()["items"]] == ["Alvarez"]
 
 
 async def test_list_filters_by_status_and_sorts_by_age(client: AsyncClient) -> None:
@@ -119,7 +119,7 @@ async def test_list_filters_by_status_and_sorts_by_age(client: AsyncClient) -> N
         "/patients", params={"status": "active", "sort": "age", "order": "desc"}
     )
 
-    assert [item["last_name"] for item in response.json()["items"]] == ["Old", "Young"]
+    assert [patient["last_name"] for patient in response.json()["items"]] == ["Old", "Young"]
 
 
 async def test_list_rejects_unknown_sort_field(client: AsyncClient) -> None:
@@ -138,5 +138,5 @@ async def test_stats_counts_every_status(client: AsyncClient) -> None:
     assert response.status_code == 200
     body = response.json()
     assert body["total"] == 2
-    counts = {entry["status"]: entry["count"] for entry in body["by_status"]}
+    counts = {status_count["status"]: status_count["count"] for status_count in body["by_status"]}
     assert counts == {"active": 1, "pending": 1, "inactive": 0, "discharged": 0}

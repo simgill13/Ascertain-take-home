@@ -41,7 +41,7 @@ export const apiClient = createClient<paths>({ baseUrl: API_BASE_URL })
  * Normalize openapi-fetch results into either data or a thrown error.
  * Throwing lets TanStack Query handle retries and error states uniformly.
  */
-export function unwrap<Data>(result: { data?: Data; error?: unknown; response: Response }): Data {
+function unwrap<Data>(result: { data?: Data; error?: unknown; response: Response }): Data {
   if (result.response.ok) {
     return result.data as Data
   }

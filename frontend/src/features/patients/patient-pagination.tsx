@@ -28,8 +28,8 @@ export function PatientPagination({
   onPageChange,
   onPageSizeChange,
 }: PatientPaginationProps) {
-  const firstItem = total === 0 ? 0 : (page - 1) * pageSize + 1
-  const lastItem = Math.min(page * pageSize, total)
+  const firstRowNumber = total === 0 ? 0 : (page - 1) * pageSize + 1
+  const lastRowNumber = Math.min(page * pageSize, total)
 
   return (
     <nav
@@ -37,7 +37,7 @@ export function PatientPagination({
       className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row"
     >
       <p className="text-muted-foreground text-sm">
-        Showing {firstItem.toLocaleString('en-US')}–{lastItem.toLocaleString('en-US')} of{' '}
+        Showing {firstRowNumber.toLocaleString('en-US')}–{lastRowNumber.toLocaleString('en-US')} of{' '}
         {total.toLocaleString('en-US')}
       </p>
       <div className="flex items-center gap-4">

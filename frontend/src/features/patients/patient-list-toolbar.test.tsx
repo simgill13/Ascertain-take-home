@@ -11,7 +11,7 @@ describe('PatientListToolbar', () => {
     const onChange = vi.fn()
     render(
       <PatientListToolbar
-        search={{ ...DEFAULT_PATIENT_LIST_SEARCH, page: 3 }}
+        listSearch={{ ...DEFAULT_PATIENT_LIST_SEARCH, page: 3 }}
         onChange={onChange}
         resultCount={0}
         isFetching={false}
@@ -28,7 +28,7 @@ describe('PatientListToolbar', () => {
   it('announces the result count', () => {
     render(
       <PatientListToolbar
-        search={DEFAULT_PATIENT_LIST_SEARCH}
+        listSearch={DEFAULT_PATIENT_LIST_SEARCH}
         onChange={vi.fn()}
         resultCount={17}
         isFetching={false}

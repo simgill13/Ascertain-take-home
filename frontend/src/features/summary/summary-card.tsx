@@ -83,8 +83,8 @@ function SummaryBody({ summary }: { summary: PatientSummary }) {
         ))}
       </div>
       <div className="flex flex-wrap gap-6 text-sm">
-        <SummaryTagGroup label="Conditions" items={summary.clinical.conditions} />
-        <SummaryTagGroup label="Allergies" items={summary.clinical.allergies} allergy />
+        <SummaryTagGroup label="Conditions" tags={summary.clinical.conditions} />
+        <SummaryTagGroup label="Allergies" tags={summary.clinical.allergies} allergy />
       </div>
     </div>
   )
@@ -101,11 +101,11 @@ function SummaryFact({ label, value }: { label: string; value: string }) {
 
 function SummaryTagGroup({
   label,
-  items,
+  tags,
   allergy = false,
 }: {
   label: string
-  items: string[]
+  tags: string[]
   allergy?: boolean
 }) {
   return (
@@ -113,13 +113,13 @@ function SummaryTagGroup({
       <p className="text-muted-foreground mb-1.5 text-xs font-medium tracking-wide uppercase">
         {label}
       </p>
-      {items.length === 0 ? (
+      {tags.length === 0 ? (
         <p className="text-muted-foreground text-sm">None recorded</p>
       ) : (
         <ul className="flex flex-wrap gap-1.5">
-          {items.map((item) => (
-            <li key={item}>
-              <Badge variant={allergy ? 'destructive' : 'secondary'}>{item}</Badge>
+          {tags.map((tag) => (
+            <li key={tag}>
+              <Badge variant={allergy ? 'destructive' : 'secondary'}>{tag}</Badge>
             </li>
           ))}
         </ul>

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { PlusIcon, UsersIcon } from 'lucide-react'
 
@@ -10,24 +10,20 @@ import { patientListQueryOptions } from '@/features/patients/api'
 import { PatientListToolbar } from '@/features/patients/patient-list-toolbar'
 import { PatientPagination } from '@/features/patients/patient-pagination'
 import { PatientTable } from '@/features/patients/patient-table'
-import type { PatientListSearch } from '@/features/patients/search-params'
+import { hasActiveFilters, type PatientListSearch } from '@/features/patients/search-params'
+import type { PatientListResponse } from '@/features/patients/types'
 
 export function PatientListPage() {
-  const search = useSearch({ from: '/shell/patients' })
+  const listSearch = useSearch({ from: '/shell/patients' })
   const navigate = useNavigate({ from: '/patients' })
-  const listQuery = useQuery(patientListQueryOptions(search))
+  const listQuery = useQuery(patientListQueryOptions(listSearch))
 
-  const updateSearch = (next: Partial<PatientListSearch>) => {
+  const updateSearch = (changes: Partial<PatientListSearch>) => {
     void navigate({
-      search: (previous: PatientListSearch) => ({ ...previous, ...next }),
+      search: (previous: PatientListSearch) => ({ ...previous, ...changes }),
       replace: true,
     })
   }
-
-  const patients = listQuery.data?.items ?? []
-  const total = listQuery.data?.total ?? 0
-  const totalPages = listQuery.data?.total_pages ?? 1
-  const hasFilters = Boolean(search.search || search.status)
 
   return (
     <>
@@ -45,51 +41,84 @@ export function PatientListPage() {
       />
 
       <PatientListToolbar
-        search={search}
+        listSearch={listSearch}
         onChange={updateSearch}
-        resultCount={total}
+        resultCount={listQuery.data?.total ?? 0}
         isFetching={listQuery.isFetching && !listQuery.isPending}
       />
 
-      {listQuery.isError ? (
-        <ErrorState error={listQuery.error} onRetry={() => void listQuery.refetch()} />
-      ) : !listQuery.isPending && patients.length === 0 ? (
-        <EmptyState
-          icon={<UsersIcon className="size-8" />}
-          title={hasFilters ? 'No patients match these filters' : 'No patients yet'}
-          description={
-            hasFilters
-              ? 'Try a different spelling or clear the status filter.'
-              : 'Add the first patient to start building the practice roster.'
-          }
-          action={
-            hasFilters ? (
-              <Button
-                variant="outline"
-                onClick={() => updateSearch({ search: undefined, status: undefined, page: 1 })}
-              >
-                Clear filters
-              </Button>
-            ) : (
-              <Button asChild>
-                <Link to="/patients/new">New patient</Link>
-              </Button>
-            )
-          }
-        />
-      ) : (
-        <>
-          <PatientTable patients={patients} isLoading={listQuery.isPending} />
-          <PatientPagination
-            page={search.page}
-            pageSize={search.pageSize}
-            totalPages={totalPages}
-            total={total}
-            onPageChange={(page) => updateSearch({ page })}
-            onPageSizeChange={(pageSize) => updateSearch({ pageSize, page: 1 })}
-          />
-        </>
-      )}
+      <PatientListBody listSearch={listSearch} listQuery={listQuery} onChange={updateSearch} />
     </>
+  )
+}
+
+type PatientListBodyProps = {
+  listSearch: PatientListSearch
+  listQuery: UseQueryResult<PatientListResponse>
+  onChange: (changes: Partial<PatientListSearch>) => void
+}
+
+function PatientListBody({ listSearch, listQuery, onChange }: PatientListBodyProps) {
+  if (listQuery.isError) {
+    return <ErrorState error={listQuery.error} onRetry={() => void listQuery.refetch()} />
+  }
+
+  if (listQuery.isPending) {
+    return <PatientTable patients={[]} isLoading />
+  }
+
+  const { items: patients, total, total_pages: totalPages } = listQuery.data
+  if (patients.length === 0) {
+    return <NoPatientsFound listSearch={listSearch} onChange={onChange} />
+  }
+
+  return (
+    <>
+      <PatientTable patients={patients} isLoading={false} />
+      <PatientPagination
+        page={listSearch.page}
+        pageSize={listSearch.pageSize}
+        totalPages={totalPages}
+        total={total}
+        onPageChange={(page) => onChange({ page })}
+        onPageSizeChange={(pageSize) => onChange({ pageSize, page: 1 })}
+      />
+    </>
+  )
+}
+
+function NoPatientsFound({
+  listSearch,
+  onChange,
+}: Pick<PatientListBodyProps, 'listSearch' | 'onChange'>) {
+  if (hasActiveFilters(listSearch)) {
+    return (
+      <EmptyState
+        icon={<UsersIcon className="size-8" />}
+        title="No patients match these filters"
+        description="Try a different spelling or clear the status filter."
+        action={
+          <Button
+            variant="outline"
+            onClick={() => onChange({ search: undefined, status: undefined, page: 1 })}
+          >
+            Clear filters
+          </Button>
+        }
+      />
+    )
+  }
+
+  return (
+    <EmptyState
+      icon={<UsersIcon className="size-8" />}
+      title="No patients yet"
+      description="Add the first patient to start building the practice roster."
+      action={
+        <Button asChild>
+          <Link to="/patients/new">New patient</Link>
+        </Button>
+      }
+    />
   )
 }

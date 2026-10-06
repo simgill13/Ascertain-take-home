@@ -14,22 +14,22 @@ CHART_LEAD_TIME = timedelta(days=90)
 NEW_INTAKE_AGE = timedelta(days=3)
 
 
-def registration_date(seed_patient: SeedPatient, reference: datetime) -> datetime:
+def registration_date(seed_patient: SeedPatient, reference_time: datetime) -> datetime:
     history_days = [seed_note.days_before_reference for seed_note in seed_patient.notes]
     if seed_patient.last_visit_days_ago is not None:
         history_days.append(seed_patient.last_visit_days_ago)
     if not history_days:
-        return reference - NEW_INTAKE_AGE
-    return reference - timedelta(days=max(history_days)) - CHART_LEAD_TIME
+        return reference_time - NEW_INTAKE_AGE
+    return reference_time - timedelta(days=max(history_days)) - CHART_LEAD_TIME
 
 
-def build_patient(seed_patient: SeedPatient, reference: datetime) -> Patient:
+def build_patient(seed_patient: SeedPatient, reference_time: datetime) -> Patient:
     last_visit_at = (
-        reference - timedelta(days=seed_patient.last_visit_days_ago)
+        reference_time - timedelta(days=seed_patient.last_visit_days_ago)
         if seed_patient.last_visit_days_ago is not None
         else None
     )
-    registered_at = registration_date(seed_patient, reference)
+    registered_at = registration_date(seed_patient, reference_time)
     patient = Patient(
         created_at=registered_at,
         updated_at=registered_at,
@@ -52,7 +52,7 @@ def build_patient(seed_patient: SeedPatient, reference: datetime) -> Patient:
     patient.notes = [
         PatientNote(
             content=seed_note.content,
-            noted_at=reference - timedelta(days=seed_note.days_before_reference),
+            noted_at=reference_time - timedelta(days=seed_note.days_before_reference),
         )
         for seed_note in seed_patient.notes
     ]
@@ -67,8 +67,10 @@ async def seed_if_empty(session: AsyncSession) -> int:
         return 0
 
     # 17:00 UTC reads as business hours (10:00 to 13:00) across US timezones.
-    reference = datetime.now(tz=UTC).replace(hour=17, minute=0, second=0, microsecond=0)
-    session.add_all([build_patient(seed_patient, reference) for seed_patient in SAMPLE_PATIENTS])
+    reference_time = datetime.now(tz=UTC).replace(hour=17, minute=0, second=0, microsecond=0)
+    session.add_all(
+        [build_patient(seed_patient, reference_time) for seed_patient in SAMPLE_PATIENTS]
+    )
     await session.commit()
     logger.info("Seeded %s patients", len(SAMPLE_PATIENTS))
     return len(SAMPLE_PATIENTS)

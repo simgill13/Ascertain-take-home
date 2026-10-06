@@ -15,6 +15,8 @@ import type { Patient } from '@/features/patients/types'
 import { SummaryCard } from '@/features/summary/summary-card'
 import { formatAge, formatDate, formatRelativeDate } from '@/lib/format'
 
+const SKELETON_CARD_COUNT = 3
+
 export function PatientDetailPage() {
   const { patientId } = useParams({ from: '/shell/patients/$patientId' })
   const patientQuery = useQuery(patientQueryOptions(patientId))
@@ -107,11 +109,11 @@ function PatientDetail({ patient }: { patient: Patient }) {
           <CardContent>
             <dl className="space-y-3 text-sm">
               <DetailItem label="Conditions">
-                <TagList items={patient.conditions} emptyLabel="No conditions recorded" />
+                <TagList tags={patient.conditions} emptyLabel="No conditions recorded" />
               </DetailItem>
               <DetailItem label="Allergies">
                 <TagList
-                  items={patient.allergies}
+                  tags={patient.allergies}
                   emptyLabel="No known allergies"
                   variant="allergy"
                 />
@@ -166,22 +168,22 @@ function DetailItem({ label, children }: { label: string; children: React.ReactN
 }
 
 function TagList({
-  items,
+  tags,
   emptyLabel,
   variant = 'default',
 }: {
-  items: string[]
+  tags: string[]
   emptyLabel: string
   variant?: 'default' | 'allergy'
 }) {
-  if (items.length === 0) {
+  if (tags.length === 0) {
     return <span className="text-muted-foreground">{emptyLabel}</span>
   }
   return (
     <ul className="flex flex-wrap gap-1.5">
-      {items.map((item) => (
-        <li key={item}>
-          <Badge variant={variant === 'allergy' ? 'destructive' : 'secondary'}>{item}</Badge>
+      {tags.map((tag) => (
+        <li key={tag}>
+          <Badge variant={variant === 'allergy' ? 'destructive' : 'secondary'}>{tag}</Badge>
         </li>
       ))}
     </ul>
@@ -196,7 +198,7 @@ function PatientDetailSkeleton() {
         <Skeleton className="h-4 w-48" />
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
-        {Array.from({ length: 3 }, (_unused, cardIndex) => (
+        {Array.from({ length: SKELETON_CARD_COUNT }, (_unused, cardIndex) => (
           <Skeleton key={cardIndex} className="h-44" />
         ))}
       </div>

@@ -33,9 +33,13 @@ ListQueryDependency = Annotated[PatientListQuery, Query()]
 async def list_patients(
     session: SessionDependency, query: ListQueryDependency
 ) -> PatientListResponse:
-    rows, total = await patient_service.list_patients(session, query)
-    items = [PatientRead.model_validate(row) for row in rows]
-    return PatientListResponse.build(items, query, total)
+    patients, total = await patient_service.list_patients(session, query)
+    return PatientListResponse(
+        items=[PatientRead.model_validate(patient) for patient in patients],
+        page=query.page,
+        page_size=query.page_size,
+        total=total,
+    )
 
 
 @router.get("/stats", response_model=PatientStats, summary="Patient counts for the dashboard")

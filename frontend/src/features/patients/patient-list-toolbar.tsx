@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { PatientListSearch } from '@/features/patients/search-params'
+import { hasActiveFilters, type PatientListSearch } from '@/features/patients/search-params'
 import {
   PATIENT_SORT_FIELDS,
   PATIENT_STATUSES,
@@ -21,37 +21,36 @@ import {
   type PatientStatus,
 } from '@/features/patients/types'
 import { useDebouncedCallback } from '@/hooks/use-debounced-callback'
+import { formatCount } from '@/lib/format'
 
 const SEARCH_DEBOUNCE_MS = 250
 const ALL_STATUSES = 'all'
 
 type PatientListToolbarProps = {
-  search: PatientListSearch
-  onChange: (next: Partial<PatientListSearch>) => void
+  listSearch: PatientListSearch
+  onChange: (changes: Partial<PatientListSearch>) => void
   resultCount: number
   isFetching: boolean
 }
 
 export function PatientListToolbar({
-  search,
+  listSearch,
   onChange,
   resultCount,
   isFetching,
 }: PatientListToolbarProps) {
-  const [searchText, setSearchText] = useState(search.search ?? '')
-  const [lastUrlSearch, setLastUrlSearch] = useState(search.search)
+  const [searchText, setSearchText] = useState(listSearch.search ?? '')
+  const [lastUrlSearch, setLastUrlSearch] = useState(listSearch.search)
   const commitSearch = useDebouncedCallback(
     (value: string) => onChange({ search: value.trim() || undefined, page: 1 }),
     SEARCH_DEBOUNCE_MS,
   )
 
   // When the URL changes from elsewhere (back button, "clear filters"), adopt its value.
-  if (search.search !== lastUrlSearch) {
-    setLastUrlSearch(search.search)
-    setSearchText(search.search ?? '')
+  if (listSearch.search !== lastUrlSearch) {
+    setLastUrlSearch(listSearch.search)
+    setSearchText(listSearch.search ?? '')
   }
-
-  const hasFilters = Boolean(search.search || search.status)
 
   return (
     <div className="mb-4 flex flex-col gap-3">
@@ -82,7 +81,7 @@ export function PatientListToolbar({
           <div>
             <Label htmlFor="patient-status-filter">Status</Label>
             <Select
-              value={search.status ?? ALL_STATUSES}
+              value={listSearch.status ?? ALL_STATUSES}
               onValueChange={(value) =>
                 onChange({
                   status: value === ALL_STATUSES ? undefined : (value as PatientStatus),
@@ -108,7 +107,7 @@ export function PatientListToolbar({
             <Label htmlFor="patient-sort">Sort by</Label>
             <div className="mt-1.5 flex gap-1">
               <Select
-                value={search.sort}
+                value={listSearch.sort}
                 onValueChange={(value) => onChange({ sort: value as PatientSortField, page: 1 })}
               >
                 <SelectTrigger id="patient-sort" className="min-w-0 flex-1 sm:w-40 sm:flex-none">
@@ -127,15 +126,15 @@ export function PatientListToolbar({
                 size="icon"
                 className="shrink-0"
                 aria-label={
-                  search.order === 'asc'
+                  listSearch.order === 'asc'
                     ? 'Sorted ascending. Switch to descending'
                     : 'Sorted descending. Switch to ascending'
                 }
                 onClick={() =>
-                  onChange({ order: search.order === 'asc' ? 'desc' : 'asc', page: 1 })
+                  onChange({ order: listSearch.order === 'asc' ? 'desc' : 'asc', page: 1 })
                 }
               >
-                {search.order === 'asc' ? <ArrowDownAZIcon /> : <ArrowUpAZIcon />}
+                {listSearch.order === 'asc' ? <ArrowDownAZIcon /> : <ArrowUpAZIcon />}
               </Button>
             </div>
           </div>
@@ -143,12 +142,8 @@ export function PatientListToolbar({
       </div>
 
       <div className="text-muted-foreground flex items-center gap-3 text-sm" aria-live="polite">
-        <span>
-          {isFetching
-            ? 'Updating…'
-            : `${resultCount.toLocaleString('en-US')} ${resultCount === 1 ? 'patient' : 'patients'}`}
-        </span>
-        {hasFilters ? (
+        <span>{isFetching ? 'Updating…' : formatCount(resultCount, 'patient')}</span>
+        {hasActiveFilters(listSearch) ? (
           <Button
             variant="ghost"
             size="sm"

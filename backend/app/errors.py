@@ -1,12 +1,11 @@
-from typing import Any
-
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException
 
-REQUEST_BODY_PREFIXES = ("body",)
+# FastAPI prefixes body field locations with "body"; clients only need the field name.
+OMITTED_LOCATION_SEGMENTS = ("body",)
 
 
 class FieldError(BaseModel):
@@ -20,7 +19,7 @@ class ErrorResponse(BaseModel):
 
 
 def field_name_from_location(location: tuple[int | str, ...]) -> str:
-    parts = [str(part) for part in location if part not in REQUEST_BODY_PREFIXES]
+    parts = [str(part) for part in location if part not in OMITTED_LOCATION_SEGMENTS]
     return ".".join(parts) if parts else "request"
 
 
@@ -34,7 +33,7 @@ def field_errors_from_validation(validation_error: RequestValidationError) -> li
     ]
 
 
-def error_json(
+def error_response(
     status_code: int, detail: str, errors: list[FieldError] | None = None
 ) -> JSONResponse:
     body = ErrorResponse(detail=detail, errors=errors or [])
@@ -42,18 +41,19 @@ def error_json(
 
 
 async def handle_validation_error(
-    request: Request, validation_error: RequestValidationError
+    unused_request: Request, validation_error: RequestValidationError
 ) -> JSONResponse:
-    return error_json(
+    return error_response(
         422,
         "The request did not pass validation.",
         field_errors_from_validation(validation_error),
     )
 
 
-async def handle_http_exception(request: Request, http_exception: HTTPException) -> JSONResponse:
-    detail: Any = http_exception.detail
-    return error_json(http_exception.status_code, str(detail))
+async def handle_http_exception(
+    unused_request: Request, http_exception: HTTPException
+) -> JSONResponse:
+    return error_response(http_exception.status_code, str(http_exception.detail))
 
 
 def register_error_handlers(app: FastAPI) -> None:

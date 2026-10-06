@@ -11,10 +11,7 @@ export const patientListSearchSchema = z.object({
   sort: z.enum(PATIENT_SORT_FIELDS).default('last_name').catch('last_name'),
   order: z.enum(['asc', 'desc']).default('asc').catch('asc'),
   page: z.number().int().min(1).default(1).catch(1),
-  pageSize: z
-    .union([z.literal(25), z.literal(50), z.literal(100)])
-    .default(25)
-    .catch(25),
+  pageSize: z.literal(PAGE_SIZES).default(25).catch(25),
 })
 
 export type PatientListSearch = z.infer<typeof patientListSearchSchema>
@@ -25,3 +22,7 @@ export const DEFAULT_PATIENT_LIST_SEARCH = {
   page: 1,
   pageSize: 25,
 } as const satisfies Partial<PatientListSearch>
+
+export function hasActiveFilters(listSearch: PatientListSearch): boolean {
+  return Boolean(listSearch.search || listSearch.status)
+}

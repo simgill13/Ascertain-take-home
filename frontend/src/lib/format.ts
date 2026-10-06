@@ -14,7 +14,7 @@ const dateTime = new Intl.DateTimeFormat('en-US', {
   minute: '2-digit',
 })
 
-const relative = new Intl.RelativeTimeFormat('en-US', { numeric: 'auto' })
+const relativeTime = new Intl.RelativeTimeFormat('en-US', { numeric: 'auto' })
 
 export function formatDate(value: string | null | undefined): string {
   if (!value) return 'Not recorded'
@@ -32,9 +32,9 @@ export function formatRelativeDate(value: string | null | undefined, now = new D
   if (!value) return 'No visit on record'
   const elapsedDays = Math.round((now.getTime() - new Date(value).getTime()) / DAY_IN_MS)
   if (elapsedDays < 1) return 'Today'
-  if (elapsedDays < 30) return relative.format(-elapsedDays, 'day')
-  if (elapsedDays < 365) return relative.format(-Math.round(elapsedDays / 30), 'month')
-  return relative.format(-Math.round(elapsedDays / 365), 'year')
+  if (elapsedDays < 30) return relativeTime.format(-elapsedDays, 'day')
+  if (elapsedDays < 365) return relativeTime.format(-Math.round(elapsedDays / 30), 'month')
+  return relativeTime.format(-Math.round(elapsedDays / 365), 'year')
 }
 
 export function formatAge(age: number): string {

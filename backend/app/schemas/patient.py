@@ -1,8 +1,8 @@
-import re
+import math
 import uuid
 from datetime import UTC, date, datetime
 from enum import StrEnum
-from typing import Annotated, Literal, Self
+from typing import Annotated, Literal
 
 from pydantic import EmailStr, Field, computed_field, field_validator
 
@@ -10,18 +10,25 @@ from app.models import BloodType, PatientStatus
 from app.schemas.common import ApiModel
 
 MAX_AGE_YEARS = 130
-MAX_LIST_ITEMS = 50
-PHONE_DIGITS = re.compile(r"\d")
+MAX_TAGS = 50
+MIN_PHONE_DIGITS = 7
 
 NameField = Annotated[str, Field(min_length=1, max_length=100)]
 Tag = Annotated[str, Field(min_length=1, max_length=120)]
-TagList = Annotated[list[Tag], Field(max_length=MAX_LIST_ITEMS)]
+TagList = Annotated[list[Tag], Field(max_length=MAX_TAGS)]
 
 
 def calculate_age(date_of_birth: date, today: date | None = None) -> int:
     today = today or datetime.now(tz=UTC).date()
     had_birthday_this_year = (today.month, today.day) >= (date_of_birth.month, date_of_birth.day)
     return today.year - date_of_birth.year - (0 if had_birthday_this_year else 1)
+
+
+def blank_to_none(value: str | None) -> str | None:
+    """Treat empty or whitespace-only input as an absent value."""
+    if value is None or not str(value).strip():
+        return None
+    return value
 
 
 def deduplicate_preserving_order(values: list[str]) -> list[str]:
@@ -40,7 +47,7 @@ class PatientInput(ApiModel):
     last_name: NameField
     date_of_birth: date
     email: EmailStr | None = None
-    phone: Annotated[str, Field(min_length=7, max_length=30)]
+    phone: Annotated[str, Field(min_length=MIN_PHONE_DIGITS, max_length=30)]
     address_line1: Annotated[str, Field(min_length=1, max_length=200)]
     address_line2: Annotated[str, Field(max_length=200)] | None = None
     city: Annotated[str, Field(min_length=1, max_length=100)]
@@ -65,23 +72,15 @@ class PatientInput(ApiModel):
     @field_validator("phone")
     @classmethod
     def phone_must_contain_digits(cls, value: str) -> str:
-        if len(PHONE_DIGITS.findall(value)) < 7:
-            raise ValueError("Phone number needs at least 7 digits.")
+        digit_count = sum(character.isdigit() for character in value)
+        if digit_count < MIN_PHONE_DIGITS:
+            raise ValueError(f"Phone number needs at least {MIN_PHONE_DIGITS} digits.")
         return value
 
-    @field_validator("address_line2", mode="before")
+    @field_validator("email", "address_line2", mode="before")
     @classmethod
-    def blank_address_line2_is_none(cls, value: str | None) -> str | None:
-        if value is None or not value.strip():
-            return None
-        return value
-
-    @field_validator("email", mode="before")
-    @classmethod
-    def blank_email_is_none(cls, value: str | None) -> str | None:
-        if value is None or not str(value).strip():
-            return None
-        return value
+    def blank_optional_text_is_none(cls, value: str | None) -> str | None:
+        return blank_to_none(value)
 
     @field_validator("allergies", "conditions")
     @classmethod
@@ -96,6 +95,7 @@ class PatientInput(ApiModel):
         return value
 
 
+# Separate names give the OpenAPI document distinct schemas for create and replace.
 class PatientCreate(PatientInput):
     pass
 
@@ -158,9 +158,7 @@ class PatientListQuery(ApiModel):
     @field_validator("search", mode="before")
     @classmethod
     def blank_search_is_none(cls, value: str | None) -> str | None:
-        if value is None or not str(value).strip():
-            return None
-        return value
+        return blank_to_none(value)
 
 
 class PatientListResponse(ApiModel):
@@ -174,11 +172,7 @@ class PatientListResponse(ApiModel):
     def total_pages(self) -> int:
         if self.total == 0:
             return 1
-        return -(-self.total // self.page_size)
-
-    @classmethod
-    def build(cls, items: list[PatientRead], query: PatientListQuery, total: int) -> Self:
-        return cls(items=items, page=query.page, page_size=query.page_size, total=total)
+        return math.ceil(self.total / self.page_size)
 
 
 class StatusCount(ApiModel):

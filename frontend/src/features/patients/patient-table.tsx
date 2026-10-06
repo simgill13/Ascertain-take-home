@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 
 const ESTIMATED_ROW_HEIGHT = 64
 const OVERSCAN_ROWS = 8
+const SKELETON_ROW_COUNT = 8
 
 const ROW_GRID =
   'grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 sm:grid-cols-[minmax(0,2fr)_1fr_1.2fr_1fr]'
@@ -124,7 +125,7 @@ function PatientTableSkeleton() {
       aria-busy="true"
       aria-label="Loading patients"
     >
-      {Array.from({ length: 8 }, (_unused, rowIndex) => (
+      {Array.from({ length: SKELETON_ROW_COUNT }, (_unused, rowIndex) => (
         <div
           key={rowIndex}
           className={cn(ROW_GRID, 'items-center border-b px-4 py-3 last:border-0')}

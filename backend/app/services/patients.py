@@ -59,7 +59,7 @@ def primary_sort(sort: PatientSortField, order: str) -> ColumnElement[Any]:
     return column.desc().nulls_last() if descending else column.asc().nulls_last()
 
 
-def sort_expression(sort: PatientSortField, order: str) -> list[ColumnElement[Any]]:
+def order_by_clauses(sort: PatientSortField, order: str) -> list[ColumnElement[Any]]:
     # Stable tiebreakers so pagination never shows the same row twice.
     return [
         primary_sort(sort, order),
@@ -80,12 +80,12 @@ async def list_patients(
 
     total = await session.scalar(select(func.count()).select_from(statement.subquery())) or 0
     offset = (query.page - 1) * query.page_size
-    rows = await session.scalars(
-        statement.order_by(*sort_expression(query.sort, query.order))
+    patients = await session.scalars(
+        statement.order_by(*order_by_clauses(query.sort, query.order))
         .offset(offset)
         .limit(query.page_size)
     )
-    return list(rows), total
+    return list(patients), total
 
 
 async def get_patient(session: AsyncSession, patient_id: uuid.UUID) -> Patient:
