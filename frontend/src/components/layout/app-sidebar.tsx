@@ -31,7 +31,7 @@ export function AppSidebar({ onNavigate, className }: AppSidebarProps) {
           className="text-foreground flex items-center gap-2 rounded-md text-base font-semibold tracking-tight"
         >
           <BrandMark />
-          Northlight
+          Ascertain
         </Link>
       </div>
       <nav aria-label="Sidebar" className="flex-1 space-y-0.5 px-3 pt-2">
@@ -41,7 +41,7 @@ export function AppSidebar({ onNavigate, className }: AppSidebarProps) {
       </nav>
       <div className="px-3 pb-4">
         <SidebarLink
-          item={{ to: '/welcome', label: 'About Northlight', icon: SparklesIcon }}
+          item={{ to: '/welcome', label: 'How this was built', icon: SparklesIcon }}
           onNavigate={onNavigate}
         />
       </div>

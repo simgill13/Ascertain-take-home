@@ -13,6 +13,7 @@ description: Playbook for the master agent to implement one assignment part by d
    - `design-reviewer` reviews screens that changed.
    - `product-reviewer` walks the journeys that changed.
    - `readability-reviewer` reads the diff.
+   - `scalability-engineer` reviews capacity when a phase touches queries, caching, or bundles.
 5. Send findings back to the owning builder. Repeat until the reviewers report no blocking findings.
 6. Run `spec-compliance-reviewer` against `docs/ASSIGNMENT.md`.
 7. Update the phase row in `docs/PROGRESS.md` with status and evidence. Do not mark a phase done when a required check failed.

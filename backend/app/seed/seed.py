@@ -1,13 +1,16 @@
 import logging
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Patient, PatientNote
 from app.seed.sample_patients import SAMPLE_PATIENTS, SeedPatient
 
 logger = logging.getLogger(__name__)
+
+# Arbitrary constant; every worker takes the same lock so only one of them seeds.
+SEED_ADVISORY_LOCK_KEY = 7_201_914
 
 # A chart exists before its first note or visit; new intakes were created days ago.
 CHART_LEAD_TIME = timedelta(days=90)
@@ -60,10 +63,18 @@ def build_patient(seed_patient: SeedPatient, reference_time: datetime) -> Patien
 
 
 async def seed_if_empty(session: AsyncSession) -> int:
-    """Insert the sample cohort when the patients table is empty. Returns rows inserted."""
+    """Insert the sample cohort when the patients table is empty. Returns rows inserted.
+
+    Several uvicorn workers start together; the transaction-scoped advisory lock makes them
+    take turns so the second one sees a populated table instead of inserting duplicates.
+    """
+    await session.execute(
+        text("SELECT pg_advisory_xact_lock(:key)"), {"key": SEED_ADVISORY_LOCK_KEY}
+    )
     existing_count = await session.scalar(select(func.count()).select_from(Patient))
     if existing_count:
         logger.info("Seed skipped: %s patients already present", existing_count)
+        await session.commit()
         return 0
 
     # 17:00 UTC reads as business hours (10:00 to 13:00) across US timezones.

@@ -4,12 +4,14 @@ from datetime import UTC, date, datetime
 from enum import StrEnum
 from typing import Annotated, Literal
 
-from pydantic import EmailStr, Field, computed_field, field_validator
+from pydantic import EmailStr, Field, computed_field, field_validator, model_validator
 
 from app.models import BloodType, PatientStatus
 from app.schemas.common import ApiModel
 
 MAX_AGE_YEARS = 130
+# Offset pagination degrades past this many rows; keyset pagination is the next step beyond it.
+MAX_OFFSET = 100_000
 MAX_TAGS = 50
 MIN_PHONE_DIGITS = 7
 
@@ -159,6 +161,14 @@ class PatientListQuery(ApiModel):
     @classmethod
     def blank_search_is_none(cls, value: str | None) -> str | None:
         return blank_to_none(value)
+
+    @model_validator(mode="after")
+    def offset_within_limit(self) -> "PatientListQuery":
+        if (self.page - 1) * self.page_size > MAX_OFFSET:
+            raise ValueError(
+                f"Page is too deep; narrow the search instead of paging past {MAX_OFFSET:,} rows."
+            )
+        return self
 
 
 class PatientListResponse(ApiModel):

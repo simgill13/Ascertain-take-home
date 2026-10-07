@@ -20,3 +20,6 @@ blob-report/
 
 .DS_Store
 *.log
+
+# Personal documents kept out of the public repository
+*.pdf

@@ -43,7 +43,7 @@ const OVERVIEW_SEARCH: PatientListSearch = {
   ...DEFAULT_PATIENT_LIST_SEARCH,
   sort: 'last_visit',
   order: 'desc',
-  pageSize: 100,
+  pageSize: 50,
 }
 
 const todayFormatter = new Intl.DateTimeFormat('en-US', {

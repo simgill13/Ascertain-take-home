@@ -1,12 +1,12 @@
 import uuid
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import PatientNote
 from app.schemas.note import NoteCreate
-from app.services.patients import get_patient
+from app.services.patients import get_patient, stats_cache
 
 
 def note_not_found(note_id: uuid.UUID) -> HTTPException:
@@ -15,15 +15,23 @@ def note_not_found(note_id: uuid.UUID) -> HTTPException:
     )
 
 
-async def list_notes(session: AsyncSession, patient_id: uuid.UUID) -> tuple[list[PatientNote], int]:
+# A chart with more notes than this returns the newest ones; older history stays in the database.
+MAX_NOTES_RETURNED = 500
+
+
+async def list_notes(
+    session: AsyncSession, patient_id: uuid.UUID, limit: int = MAX_NOTES_RETURNED
+) -> tuple[list[PatientNote], int]:
     await get_patient(session, patient_id)
     statement = (
         select(PatientNote)
         .where(PatientNote.patient_id == patient_id)
         .order_by(PatientNote.noted_at.desc(), PatientNote.created_at.desc())
+        .limit(limit)
     )
     notes = list(await session.scalars(statement))
-    return notes, len(notes)
+    total = await session.scalar(select(func.count()).where(PatientNote.patient_id == patient_id))
+    return notes, total or 0
 
 
 async def create_note(
@@ -35,6 +43,7 @@ async def create_note(
     # A note documents an encounter, so it advances the chart's last visit when newer.
     if patient.last_visit_at is None or payload.noted_at > patient.last_visit_at:
         patient.last_visit_at = payload.noted_at
+        stats_cache.clear()
     await session.commit()
     await session.refresh(note)
     return note

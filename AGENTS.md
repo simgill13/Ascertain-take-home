@@ -21,7 +21,7 @@ Do not edit another agent's files. Ask that agent for the change.
 
 ## How to build a part
 
-Follow the `orchestrate-feature` skill: read the assignment section, delegate schema then API then UI, run the review loop (`qa-engineer`, `design-reviewer`, `product-reviewer`, `readability-reviewer`), then `spec-compliance-reviewer`. Project skills override vendored design skills when they conflict, especially accessibility and reduced motion.
+Follow the `orchestrate-feature` skill: read the assignment section, delegate schema then API then UI, run the review loop (`qa-engineer`, `design-reviewer`, `product-reviewer`, `readability-reviewer`), then `spec-compliance-reviewer`. Before claiming capacity, run `scalability-engineer` and implement its findings through the owning builders. Project skills override vendored design skills when they conflict, especially accessibility and reduced motion.
 
 ## Code
 

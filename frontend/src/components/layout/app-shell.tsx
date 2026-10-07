@@ -1,10 +1,14 @@
 import { Outlet } from '@tanstack/react-router'
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 
 import { AppHeader } from '@/components/layout/app-header'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { Toaster } from '@/components/ui/sonner'
+
+// Toasts only appear after an action, so the toaster stays out of the initial bundle.
+const Toaster = lazy(() =>
+  import('@/components/ui/sonner').then((module) => ({ default: module.Toaster })),
+)
 
 export function AppShell() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -39,7 +43,9 @@ export function AppShell() {
           <AppSidebar onNavigate={() => setMobileNavOpen(false)} />
         </SheetContent>
       </Sheet>
-      <Toaster position="bottom-right" richColors closeButton />
+      <Suspense fallback={null}>
+        <Toaster position="bottom-right" richColors closeButton />
+      </Suspense>
     </div>
   )
 }

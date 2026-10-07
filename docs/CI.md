@@ -9,7 +9,7 @@ Owned by `ci-engineer`. Every job has a matching `scripts/verify.sh` step so a f
 | pr-title | Conventional Commits title (`feat`, `fix`, `chore`, `docs`, `test`, `ci`, `refactor`) | n/a |
 | lint-and-types | Ruff, mypy, ESLint, Prettier, `tsc` | `scripts/verify.sh lint` |
 | backend-unit | pytest against a Postgres 16 service, `--durations=20` uploaded as an artifact | `scripts/verify.sh backend` |
-| frontend-unit | Vitest + Testing Library | `scripts/verify.sh frontend` |
+| frontend-unit | Vitest + Testing Library, then `vite build` and the gzip bundle budget | `scripts/verify.sh frontend` and `scripts/verify.sh bundle` |
 | api-contract | `backend/openapi.json` and `frontend/src/lib/api/schema.d.ts` must match the running app | `scripts/verify.sh contract` |
 | e2e | Playwright journeys and axe checks against the dev servers, blob report uploaded | `scripts/verify.sh e2e` |
 | docker-build | `docker compose build`, `up --wait`, `GET /health`, `GET /api/patients/stats` through nginx | `docker compose up --build` |
@@ -22,7 +22,7 @@ Measured locally on 2026-10-06 (Apple Silicon, warm caches). CI numbers go here 
 
 | Suite | Tests | Wall clock |
 | --- | --- | --- |
-| pytest | 24 | 1.9s (1.1s is the one-time Alembic migration in the session fixture) |
+| pytest | 33 | 2.4s (1.1s is the one-time Alembic migration in the session fixture) |
 | Vitest | 26 | 2.5s |
 | Playwright (chromium, 1 worker) | 23 | 36s |
 

@@ -7,6 +7,7 @@ from sqlalchemy import ColumnElement, Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute
 
+from app.config import get_settings
 from app.models import Patient, PatientStatus
 from app.schemas.patient import (
     PatientCreate,
@@ -16,9 +17,13 @@ from app.schemas.patient import (
     PatientUpdate,
     StatusCount,
 )
+from app.services.ttl_cache import TtlCache
 
 RECENT_WINDOW = timedelta(days=30)
 STALE_VISIT_WINDOW = timedelta(days=365)
+
+# Every dashboard visit reads stats; a short TTL keeps the aggregate queries off the hot path.
+stats_cache: TtlCache[PatientStats] = TtlCache(get_settings().stats_cache_ttl_seconds)
 
 
 def patient_not_found(patient_id: uuid.UUID) -> HTTPException:
@@ -38,7 +43,7 @@ SORT_COLUMNS: dict[PatientSortField, InstrumentedAttribute[Any]] = {
 
 def apply_search(statement: Select[Patient], search: str) -> Select[Patient]:
     pattern = f"%{search.strip()}%"
-    full_name = func.concat(Patient.first_name, " ", Patient.last_name)
+    full_name = Patient.first_name + " " + Patient.last_name
     return statement.where(
         or_(
             Patient.first_name.ilike(pattern),
@@ -100,6 +105,7 @@ async def create_patient(session: AsyncSession, payload: PatientCreate) -> Patie
     session.add(patient)
     await session.commit()
     await session.refresh(patient)
+    stats_cache.clear()
     return patient
 
 
@@ -111,6 +117,7 @@ async def update_patient(
         setattr(patient, field_name, value)
     await session.commit()
     await session.refresh(patient)
+    stats_cache.clear()
     return patient
 
 
@@ -118,9 +125,19 @@ async def delete_patient(session: AsyncSession, patient_id: uuid.UUID) -> None:
     patient = await get_patient(session, patient_id)
     await session.delete(patient)
     await session.commit()
+    stats_cache.clear()
 
 
 async def patient_stats(session: AsyncSession) -> PatientStats:
+    cached = stats_cache.get()
+    if cached is not None:
+        return cached
+    computed = await compute_patient_stats(session)
+    stats_cache.set(computed)
+    return computed
+
+
+async def compute_patient_stats(session: AsyncSession) -> PatientStats:
     now = datetime.now(tz=UTC)
     status_rows = await session.execute(
         select(Patient.status, func.count()).group_by(Patient.status)

@@ -11,8 +11,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Read Health */
+        /** Liveness: the process is up */
         get: operations["read_health_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/health/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Readiness: the database answers */
+        get: operations["read_readiness_health_ready_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -394,6 +411,19 @@ export interface components {
             /** @default active */
             status: components["schemas"]["PatientStatus"];
         };
+        /** ReadinessResponse */
+        ReadinessResponse: {
+            /**
+             * Database
+             * @constant
+             */
+            database: "ok";
+            /**
+             * Status
+             * @constant
+             */
+            status: "ready";
+        };
         /** StatusCount */
         StatusCount: {
             /** Count */
@@ -447,6 +477,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    read_readiness_health_ready_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadinessResponse"];
+                };
+            };
+            /** @description Database unreachable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };

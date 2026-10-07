@@ -14,6 +14,7 @@ export default tseslint.config(
       'playwright-report',
       'test-results',
       'src/lib/api/schema.d.ts',
+      'scripts/**',
     ],
   },
   {

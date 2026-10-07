@@ -11,6 +11,7 @@ from app.schemas.summary import PatientSummary, SummaryClinical, SummaryIdentifi
 from app.services.notes import list_notes
 from app.services.patients import get_patient
 from app.services.summary.providers import (
+    MAX_NOTES_IN_PROMPT,
     SummaryProvider,
     TemplateSummaryProvider,
     select_provider,
@@ -35,7 +36,9 @@ async def generate_narrative(
 
 async def build_patient_summary(session: AsyncSession, patient_id: uuid.UUID) -> PatientSummary:
     patient = await get_patient(session, patient_id)
-    notes, note_count = await list_notes(session, patient_id)
+    notes, note_count = await list_notes(session, patient_id, limit=MAX_NOTES_IN_PROMPT)
+    # Release the pooled connection before a provider call that may take seconds.
+    await session.commit()
     provider = select_provider(get_settings())
     narrative, generated_by = await generate_narrative(provider, patient, notes)
 

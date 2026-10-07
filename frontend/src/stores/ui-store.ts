@@ -42,7 +42,7 @@ export const useUiStore = create<UiState>()(
       setBreadcrumbs: (breadcrumbs) => set({ breadcrumbs }),
     }),
     {
-      name: 'northlight-ui',
+      name: 'ascertain-ui',
       partialize: (state) => ({ sidebarCollapsed: state.sidebarCollapsed }),
     },
   ),
@@ -51,7 +51,7 @@ export const useUiStore = create<UiState>()(
 // Theme is stored under its own key so index.html can read it before React loads.
 useUiStore.subscribe((state) => {
   try {
-    localStorage.setItem('northlight-theme', state.theme)
+    localStorage.setItem('ascertain-theme', state.theme)
   } catch {
     /* storage unavailable */
   }

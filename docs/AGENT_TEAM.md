@@ -36,12 +36,13 @@ Reviewers are read-only and return findings.
 | `product-reviewer` | the journeys in `product-walkthrough` |
 | `readability-reviewer` | the checklist in `review-readability` |
 | `spec-compliance-reviewer` | every requirement in `docs/ASSIGNMENT.md` with evidence |
+| `scalability-engineer` | capacity to 100k to 1M users; specifies fixes that builders implement (`docs/SCALABILITY.md`) |
 
 The master agent is whichever agent the developer is chatting with. It follows `orchestrate-feature`.
 
 ## Project skills
 
-`orchestrate-feature`, `spec-compliance-check`, `verify-all`, `review-readability`, `review-design-accessibility`, `product-walkthrough`, `landing-page-motion`, `ci-pipeline`.
+`orchestrate-feature`, `spec-compliance-check`, `verify-all`, `review-readability`, `review-design-accessibility`, `product-walkthrough`, `landing-page-motion`, `ci-pipeline`, `scale-review`.
 
 ## Vendored design skills
 

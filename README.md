@@ -1,6 +1,6 @@
-# Northlight — healthcare patient dashboard
+# Ascertain patient dashboard
 
-A patient management dashboard for a medical practice: FastAPI + PostgreSQL on the back, React 19 + TypeScript on the front, with clinical notes, a generated patient summary, and a full test and CI setup.
+A patient management dashboard built for the Ascertain take-home: FastAPI + PostgreSQL on the back, React 19 + TypeScript on the front, with clinical notes, a generated patient summary, a scalability pass to 1M users, and a full test and CI setup. The `/welcome` page is the build log: how the agent team worked, the stack, the scaling techniques, and the author.
 
 The repository is also built to be worked on by coding agents. `AGENTS.md`, the specialist agents in `.claude/agents/`, and the skills in `.agents/skills/` let Cursor, Claude Code, or Codex build, review, and verify changes against the original task in [docs/ASSIGNMENT.md](docs/ASSIGNMENT.md). See [docs/AGENT_TEAM.md](docs/AGENT_TEAM.md).
 
@@ -55,13 +55,13 @@ npm run dev                   # http://localhost:5173, proxies /api to the backe
 `scripts/verify.sh` runs the same checks as CI. Each section can run on its own.
 
 ```bash
-scripts/verify.sh             # lint, types, backend unit, frontend unit, API contract
+scripts/verify.sh             # lint, types, backend unit, frontend unit, bundle budget, API contract
 scripts/verify.sh e2e         # Playwright journeys and axe accessibility checks (needs browsers: npx --prefix frontend playwright install chromium)
 ```
 
 | Suite | Count | Where |
 | --- | --- | --- |
-| pytest | 24 | `backend/tests/` |
+| pytest | 33 | `backend/tests/` |
 | Vitest + Testing Library | 26 | `frontend/src/**/*.test.tsx` |
 | Playwright + axe | 23 | `frontend/e2e/` |
 
@@ -69,7 +69,8 @@ scripts/verify.sh e2e         # Playwright journeys and axe accessibility checks
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| GET | `/health` | `{"status": "ok"}` |
+| GET | `/health` | liveness, `{"status": "ok"}` |
+| GET | `/health/ready` | readiness, runs `SELECT 1`; 503 when the database is unreachable |
 | GET | `/patients` | `search`, `status`, `sort` (`last_name`, `first_name`, `age`, `last_visit`, `status`, `created_at`), `order`, `page`, `page_size` (max 100) |
 | GET | `/patients/stats` | counts by status, visits and new patients in the last 30 days, active patients without a visit in a year |
 | POST | `/patients` | 201; validation errors return 422 |
@@ -86,6 +87,10 @@ Errors share one shape:
 
 The OpenAPI document is committed at [backend/openapi.json](backend/openapi.json) and the frontend's request and response types are generated from it (`frontend/src/lib/api/schema.d.ts`). CI fails when either drifts from the running app.
 
+## Scale
+
+The app was reviewed against 100k registered users and 1M monthly visitors and the findings implemented: worker processes with a seed lock, tuned connection pools with statement timeouts, trigram and composite indexes, ETag/304, a stats cache, rate limiting, request IDs, a 150 KB gzipped bundle budget enforced in CI, request cancellation, and nginx keep-alive. Every GET carries `ETag` and `X-Request-ID`. Details and the honest single-node limits are in [docs/SCALABILITY.md](docs/SCALABILITY.md).
+
 ## Summary generation
 
 `GET /patients/{id}/summary` uses a template by default and works offline. Set `SUMMARY_PROVIDER=anthropic` or `openai` with the matching API key in `.env` to have a model write the narrative; the API falls back to the template if the provider call fails.
@@ -95,7 +100,7 @@ The OpenAPI document is committed at [backend/openapi.json](backend/openapi.json
 ```
 backend/   FastAPI app: app/{routers,schemas,services,models,seed}, alembic/, tests/
 frontend/  Vite + React: src/{features,components,routes,lib,stores}, e2e/
-docs/      ASSIGNMENT.md (the task), ARCHITECTURE.md, DATA_MODEL.md, CI.md, PROGRESS.md, AGENT_TEAM.md
+docs/      ASSIGNMENT.md (the task), ARCHITECTURE.md, DATA_MODEL.md, SCALABILITY.md, CI.md, PROGRESS.md, AGENT_TEAM.md
 scripts/   verify.sh, export_openapi.py, sync_codex_agents.py
 .agents/   skills shared by Cursor, Claude Code, and Codex
 .claude/   agent definitions (also read by Cursor)

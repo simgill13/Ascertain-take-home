@@ -6,6 +6,8 @@ services:
   backend:
     environment:
       APP_ENV: development
+      # --reload runs a single process; workers are a production setting.
+      WEB_CONCURRENCY: 1
       UVICORN_EXTRA_ARGS: "--reload --reload-dir app"
     volumes:
       - ./backend/app:/app/app

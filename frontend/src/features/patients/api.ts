@@ -9,6 +9,10 @@ import type {
 } from '@/features/patients/types'
 import { apiClient, request } from '@/lib/api/client'
 
+const PATIENT_DETAIL_STALE_MS = 60_000
+// Matches the server-side stats cache TTL so the client never asks sooner than the API recomputes.
+const STATS_STALE_MS = 15_000
+
 export const patientKeys = {
   all: ['patients'] as const,
   lists: () => [...patientKeys.all, 'list'] as const,
@@ -18,9 +22,13 @@ export const patientKeys = {
   stats: () => [...patientKeys.all, 'stats'] as const,
 }
 
-export function fetchPatientList(search: PatientListSearch): Promise<PatientListResponse> {
+export function fetchPatientList(
+  search: PatientListSearch,
+  signal?: AbortSignal,
+): Promise<PatientListResponse> {
   return request(() =>
     apiClient.GET('/patients', {
+      signal,
       params: {
         query: {
           search: search.search,
@@ -38,7 +46,8 @@ export function fetchPatientList(search: PatientListSearch): Promise<PatientList
 export function patientListQueryOptions(search: PatientListSearch) {
   return queryOptions({
     queryKey: patientKeys.list(search),
-    queryFn: () => fetchPatientList(search),
+    // The signal cancels a superseded search when the user keeps typing.
+    queryFn: ({ signal }) => fetchPatientList(search, signal),
     placeholderData: keepPreviousData,
   })
 }
@@ -46,17 +55,23 @@ export function patientListQueryOptions(search: PatientListSearch) {
 export function patientQueryOptions(patientId: string) {
   return queryOptions({
     queryKey: patientKeys.detail(patientId),
-    queryFn: (): Promise<Patient> =>
+    queryFn: ({ signal }): Promise<Patient> =>
       request(() =>
-        apiClient.GET('/patients/{patient_id}', { params: { path: { patient_id: patientId } } }),
+        apiClient.GET('/patients/{patient_id}', {
+          signal,
+          params: { path: { patient_id: patientId } },
+        }),
       ),
+    staleTime: PATIENT_DETAIL_STALE_MS,
   })
 }
 
 export function patientStatsQueryOptions() {
   return queryOptions({
     queryKey: patientKeys.stats(),
-    queryFn: (): Promise<PatientStats> => request(() => apiClient.GET('/patients/stats')),
+    queryFn: ({ signal }): Promise<PatientStats> =>
+      request(() => apiClient.GET('/patients/stats', { signal })),
+    staleTime: STATS_STALE_MS,
   })
 }
 

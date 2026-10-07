@@ -23,7 +23,7 @@ export function AppHeader() {
 
       <Link to="/" className="flex items-center gap-1.5 rounded-md font-semibold lg:hidden">
         <BrandMark />
-        Northlight
+        Ascertain
       </Link>
 
       <nav aria-label="Breadcrumb" className="hidden min-w-0 items-center text-sm lg:flex">

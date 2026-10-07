@@ -15,7 +15,8 @@ from app.schemas.patient import calculate_age
 
 logger = logging.getLogger(__name__)
 
-LLM_TIMEOUT_SECONDS = 20.0
+LLM_TIMEOUT_SECONDS = 10.0
+MAX_CONCURRENT_LLM_CALLS = 20
 MAX_NARRATIVE_TOKENS = 600
 MAX_NOTES_IN_PROMPT = 12
 DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-5"
@@ -27,6 +28,13 @@ SYSTEM_PROMPT = (
     "two to four short paragraphs, newest information first. Only use facts present in "
     "the notes and profile. Do not invent diagnoses, medications, or dates. Do not add "
     "headings or bullet points."
+)
+
+
+# One client per process: connection reuse, and a ceiling on concurrent upstream calls.
+llm_http_client = httpx.AsyncClient(
+    timeout=LLM_TIMEOUT_SECONDS,
+    limits=httpx.Limits(max_connections=MAX_CONCURRENT_LLM_CALLS),
 )
 
 
@@ -138,24 +146,23 @@ class AnthropicSummaryProvider:
         self.model = model or DEFAULT_ANTHROPIC_MODEL
 
     async def narrative(self, patient: Patient, notes: list[PatientNote]) -> str:
-        async with httpx.AsyncClient(timeout=LLM_TIMEOUT_SECONDS) as client:
-            response = await client.post(
-                "https://api.anthropic.com/v1/messages",
-                headers={
-                    "x-api-key": self.api_key,
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json",
-                },
-                json={
-                    "model": self.model,
-                    "max_tokens": MAX_NARRATIVE_TOKENS,
-                    "system": SYSTEM_PROMPT,
-                    "messages": [{"role": "user", "content": build_prompt(patient, notes)}],
-                },
-            )
-            response.raise_for_status()
-            content_blocks = response.json()["content"]
-            return "".join(block.get("text", "") for block in content_blocks).strip()
+        response = await llm_http_client.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": self.api_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": self.model,
+                "max_tokens": MAX_NARRATIVE_TOKENS,
+                "system": SYSTEM_PROMPT,
+                "messages": [{"role": "user", "content": build_prompt(patient, notes)}],
+            },
+        )
+        response.raise_for_status()
+        content_blocks = response.json()["content"]
+        return "".join(block.get("text", "") for block in content_blocks).strip()
 
 
 class OpenAISummaryProvider:
@@ -166,22 +173,21 @@ class OpenAISummaryProvider:
         self.model = model or DEFAULT_OPENAI_MODEL
 
     async def narrative(self, patient: Patient, notes: list[PatientNote]) -> str:
-        async with httpx.AsyncClient(timeout=LLM_TIMEOUT_SECONDS) as client:
-            response = await client.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers={"Authorization": f"Bearer {self.api_key}"},
-                json={
-                    "model": self.model,
-                    "max_tokens": MAX_NARRATIVE_TOKENS,
-                    "messages": [
-                        {"role": "system", "content": SYSTEM_PROMPT},
-                        {"role": "user", "content": build_prompt(patient, notes)},
-                    ],
-                },
-            )
-            response.raise_for_status()
-            message = response.json()["choices"][0]["message"]["content"]
-            return str(message).strip()
+        response = await llm_http_client.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={"Authorization": f"Bearer {self.api_key}"},
+            json={
+                "model": self.model,
+                "max_tokens": MAX_NARRATIVE_TOKENS,
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": build_prompt(patient, notes)},
+                ],
+            },
+        )
+        response.raise_for_status()
+        message = response.json()["choices"][0]["message"]["content"]
+        return str(message).strip()
 
 
 def select_provider(settings: Settings) -> SummaryProvider:

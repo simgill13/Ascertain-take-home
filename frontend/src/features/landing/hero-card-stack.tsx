@@ -12,7 +12,7 @@ import { useRef } from 'react'
 import { useMediaQuery } from '@/hooks/use-media-query'
 
 import { Badge } from '@/components/ui/badge'
-import { SAMPLE_CARDS } from '@/features/landing/landing-copy'
+import { AGENT_LEVEL_CARDS } from '@/features/landing/landing-copy'
 import { TINT_CLASS } from '@/features/patients/status-styles'
 import { cn } from '@/lib/utils'
 
@@ -29,6 +29,12 @@ const SCROLL_SPREAD = [1, 1.6]
 const MAX_TILT_DEGREES = 6
 // Narrow screens get half the fan so the back cards stay inside the viewport.
 const NARROW_FAN_SCALE = 0.5
+const LEVEL_TINT = {
+  Orchestrates: TINT_CLASS.violet,
+  Builds: TINT_CLASS.green,
+  Reviews: TINT_CLASS.amber,
+} as const
+
 // Pose shown when the visitor prefers reduced motion.
 const STATIC_ROTATE_X = 6
 const STATIC_ROTATE_Y = -8
@@ -90,7 +96,7 @@ export function HeroCardStack() {
         className="absolute inset-0"
         style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
       >
-        {SAMPLE_CARDS.map((card, cardIndex) => (
+        {AGENT_LEVEL_CARDS.map((card, cardIndex) => (
           <StackedCard
             key={card.name}
             card={card}
@@ -99,7 +105,7 @@ export function HeroCardStack() {
             spread={spread}
             fanScale={fanScale}
             reduceMotion={Boolean(reduceMotion)}
-            entranceDelay={0.15 * (SAMPLE_CARDS.length - cardIndex)}
+            entranceDelay={0.15 * (AGENT_LEVEL_CARDS.length - cardIndex)}
           />
         ))}
       </motion.div>
@@ -108,7 +114,7 @@ export function HeroCardStack() {
 }
 
 type StackedCardProps = {
-  card: (typeof SAMPLE_CARDS)[number]
+  card: (typeof AGENT_LEVEL_CARDS)[number]
   offset: (typeof CARD_OFFSETS)[number]
   spread: MotionValue<number>
   fanScale: number
@@ -148,7 +154,7 @@ function StackedCard({
         y: translateY,
         z: translateZ,
         rotateZ: offset.rotateZ,
-        zIndex: SAMPLE_CARDS.length - stackPosition,
+        zIndex: AGENT_LEVEL_CARDS.length - stackPosition,
       }}
       initial={reduceMotion ? false : { opacity: 0, y: offset.shiftY + 40 }}
       animate={{ opacity: 1 }}
@@ -156,13 +162,13 @@ function StackedCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-display text-lg font-semibold">{card.name}</p>
+          <p className="text-lg font-semibold">{card.name}</p>
           <p className="text-muted-foreground text-xs">{card.meta}</p>
         </div>
         <span
           className={cn(
             'rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap',
-            card.status === 'Active' ? TINT_CLASS.green : TINT_CLASS.amber,
+            LEVEL_TINT[card.status],
           )}
         >
           {card.status}

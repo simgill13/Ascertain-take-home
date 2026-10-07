@@ -7,6 +7,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-healthcare}
+    # Room for WEB_CONCURRENCY workers x (DB_POOL_SIZE + DB_MAX_OVERFLOW) connections plus tooling.
+    command: postgres -c max_connections=200 -c shared_buffers=256MB
     volumes:
       - postgres-data:/var/lib/postgresql/data
     ports:
@@ -24,6 +26,11 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-healthcare}
       SEED_ON_STARTUP: ${SEED_ON_STARTUP:-true}
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-10}
+      DB_MAX_OVERFLOW: ${DB_MAX_OVERFLOW:-10}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-600}
+      STATS_CACHE_TTL_SECONDS: ${STATS_CACHE_TTL_SECONDS:-15}
       CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:8080","http://localhost:5173"]}
       SUMMARY_PROVIDER: ${SUMMARY_PROVIDER:-template}
       SUMMARY_MODEL: ${SUMMARY_MODEL:-}
@@ -40,7 +47,7 @@ services:
           "CMD",
           "python",
           "-c",
-          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=2)",
         ]
       interval: 5s
       timeout: 3s

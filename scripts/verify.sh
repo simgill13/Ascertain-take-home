@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Local equivalent of the pull request checks.
-# Usage: scripts/verify.sh [lint|backend|frontend|contract|e2e|all]
+# Usage: scripts/verify.sh [lint|backend|frontend|bundle|contract|e2e|all]
 set -euo pipefail
 
 REPOSITORY_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -36,6 +36,14 @@ run_frontend() {
   fi
 }
 
+run_bundle() {
+  echo "== bundle budget =="
+  if [[ -f frontend/package.json ]]; then
+    npm --prefix frontend run build >/dev/null
+    node frontend/scripts/check-bundle-budget.mjs
+  fi
+}
+
 run_contract() {
   echo "== api contract =="
   if [[ -f backend/pyproject.toml && -f backend/openapi.json ]]; then
@@ -66,6 +74,7 @@ case "${SECTION}" in
   lint) run_lint ;;
   backend) run_backend ;;
   frontend) run_frontend ;;
+  bundle) run_bundle ;;
   contract) run_contract ;;
   e2e) run_e2e ;;
   all)
@@ -73,6 +82,7 @@ case "${SECTION}" in
     run_lint
     run_backend
     run_frontend
+    run_bundle
     run_contract
     ;;
   *)

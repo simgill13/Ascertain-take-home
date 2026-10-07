@@ -5,7 +5,7 @@ test.describe('welcome landing', () => {
   test('the call to action opens the dashboard', async ({ page }) => {
     await page.goto('/welcome')
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-      'The chart, before the patient walks in.',
+      'A patient dashboard, built by a team of agents.',
     )
 
     await page.getByRole('main').getByRole('link', { name: 'Open dashboard' }).first().click()
@@ -39,7 +39,12 @@ test.describe('welcome landing', () => {
     await expect(
       page.getByRole('main').getByRole('link', { name: 'Open dashboard' }).first(),
     ).toBeVisible()
-    for (const title of ['Find a patient', 'Read the chart', 'Write the note']) {
+    for (const title of [
+      'How it was built',
+      'The agent team',
+      'Backend versus frontend',
+      'Built to scale to a million users',
+    ]) {
       await expect(page.getByRole('heading', { name: title })).toBeVisible()
     }
 

@@ -10,11 +10,12 @@ import {
 
 import { AppShell } from '@/components/layout/app-shell'
 import { RouteErrorPage } from '@/routes/route-error-page'
+import { patientQueryOptions } from '@/features/patients/api'
 import {
   DEFAULT_PATIENT_DETAIL_SEARCH,
   DEFAULT_PATIENT_LIST_SEARCH,
-  patientDetailSearchSchema,
-  patientListSearchSchema,
+  parsePatientDetailSearch,
+  parsePatientListSearch,
 } from '@/features/patients/search-params'
 import { NotFoundPage } from '@/routes/not-found-page'
 
@@ -46,7 +47,7 @@ const dashboardRoute = createRoute({
 const patientsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/patients',
-  validateSearch: patientListSearchSchema,
+  validateSearch: parsePatientListSearch,
   search: { middlewares: [stripSearchParams(DEFAULT_PATIENT_LIST_SEARCH)] },
   component: lazyRouteComponent(
     () => import('@/features/patients/patient-list-page'),
@@ -66,8 +67,12 @@ const newPatientRoute = createRoute({
 const patientDetailRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/patients/$patientId',
-  validateSearch: patientDetailSearchSchema,
+  validateSearch: parsePatientDetailSearch,
   search: { middlewares: [stripSearchParams(DEFAULT_PATIENT_DETAIL_SEARCH)] },
+  // Hovering a patient link (defaultPreload: 'intent') warms the cache before the click.
+  loader: ({ context, params }) => {
+    void context.queryClient.prefetchQuery(patientQueryOptions(params.patientId))
+  },
   component: lazyRouteComponent(
     () => import('@/features/patients/patient-detail-page'),
     'PatientDetailPage',

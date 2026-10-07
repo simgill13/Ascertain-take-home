@@ -34,6 +34,10 @@ In production-like mode the browser only ever talks to nginx, so there is no COR
 - **Accessibility as a floor, not a feature.** Every control is labelled, errors are tied to fields with `aria-describedby`, loading states use `role="status"`, status is never color alone, focus is always visible, the sidebar collapses into a focus-trapped sheet, and axe runs in CI on every screen in light and dark. Touch targets grow to 44px on coarse pointers.
 - **Motion is contained.** The `/welcome` landing is a separate lazy route and the only place that imports `motion/react`; a unit test enforces that boundary. Scroll-linked and 3D effects animate only `transform` and `opacity`, parallax is capped at 24px, and `prefers-reduced-motion` renders the final pose with no scroll binding. Dashboard screens use transitions under 200 ms.
 
+## Scale
+
+A dedicated agent reviewed the code against 100k users and 1M visits; the result is in `SCALABILITY.md`. The design choices it drove: worker processes with an advisory-locked seed, per-worker pools with statement timeouts, trigram and composite indexes behind every search and sort, ETag revalidation, a short-TTL cache for dashboard aggregates, per-client rate limits, request IDs end to end, request cancellation in the browser, and a gzip bundle budget in CI. The summary endpoint releases its database connection before calling an LLM. What a single node cannot provide (replicas, shared cache, CDN, autoscaling) is listed as next steps rather than implied.
+
 ## Testing
 
 - **pytest** hits the real schema: a session fixture runs `alembic downgrade base` then `upgrade head` on a test database and truncates between tests. Tests cover status codes, the error envelope, pagination math, search, sorting, cascade deletes, and summary content.
