@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 
 import { LoadingStatus } from '@/components/state/loading-status'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -84,7 +84,8 @@ export function PatientTable({ patients, isLoading, className }: PatientTablePro
   )
 }
 
-function PatientRow({ patient }: { patient: Patient }) {
+// Rows re-render on every scroll tick of the virtualizer; memo keeps unchanged rows static.
+const PatientRow = memo(function PatientRow({ patient }: { patient: Patient }) {
   return (
     <div
       className={cn(
@@ -122,7 +123,7 @@ function PatientRow({ patient }: { patient: Patient }) {
       </div>
     </div>
   )
-}
+})
 
 function PatientTableSkeleton() {
   return (

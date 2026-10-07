@@ -22,15 +22,15 @@ Measured locally on 2026-10-06 (Apple Silicon, warm caches). CI numbers go here 
 
 | Suite | Tests | Wall clock |
 | --- | --- | --- |
-| pytest | 24 | 1.8s (1.1s is the one-time Alembic migration in the session fixture) |
-| Vitest | 24 | 2.2s |
-| Playwright (chromium, 1 worker) | 14 | 22s |
+| pytest | 24 | 1.9s (1.1s is the one-time Alembic migration in the session fixture) |
+| Vitest | 26 | 2.5s |
+| Playwright (chromium, 1 worker) | 20 | 35s |
 
 ## Sharding decision
 
 No sharding yet. The rules from the `ci-pipeline` skill:
 
-- A job over 8 minutes gets split. The slowest suite is Playwright at 22 seconds, so every job is well under the threshold even with dependency installation.
+- A job over 8 minutes gets split. The slowest suite is Playwright at 35 seconds, so every job is well under the threshold even with dependency installation.
 - Playwright runs with `workers: 1` on purpose: the journeys create and delete real patients against one database and parallel workers would race on the shared list counts. Before sharding, the suite needs per-worker data isolation (a unique last-name prefix per worker and list assertions scoped to it).
 - Next review point: when Playwright passes about 5 minutes serial, move to a 2-shard matrix with the blob reporter (already enabled in CI) and a merge-reports job.
 
