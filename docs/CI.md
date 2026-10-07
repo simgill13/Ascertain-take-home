@@ -14,7 +14,7 @@ Owned by `ci-engineer`. Every job has a matching `scripts/verify.sh` step so a f
 | e2e | Playwright journeys and axe checks against the dev servers, blob report uploaded | `scripts/verify.sh e2e` |
 | docker-build | `docker compose build`, `up --wait`, `GET /health`, `GET /api/patients/stats` through nginx | `docker compose up --build` |
 
-Dependabot groups weekly updates for uv, npm, and GitHub Actions. Actions are pinned to commit SHAs with the release tag in a comment.
+Dependabot groups weekly updates for uv, npm, and GitHub Actions. Actions are pinned to commit SHAs with the release tag in a comment. Major bumps of `eslint`, `@eslint/js`, and `typescript` are ignored until `eslint-plugin-jsx-a11y` and `typescript-eslint` support them; the first Dependabot PR (ESLint 10) failed `npm ci` on exactly that peer conflict.
 
 ## Timings
 

@@ -19,6 +19,15 @@ updates:
         patterns: ["*"]
     commit-message:
       prefix: "chore(deps)"
+    ignore:
+      # eslint-plugin-jsx-a11y pins eslint <= 9; typescript-eslint supports typescript < 6.1.
+      # Major bumps here break `npm ci`, so they wait until the plugins catch up.
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
