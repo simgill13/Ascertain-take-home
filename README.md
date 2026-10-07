@@ -22,6 +22,8 @@ docker compose up --build
 
 The backend applies Alembic migrations on start and seeds 20 fictional patients with 35 notes when the database is empty. `docker compose down -v` resets the data.
 
+If port 5432 is already taken on your machine, set `POSTGRES_PORT=5434` (or any free port) in `.env`; the containers talk to each other on the internal network regardless.
+
 Hot reload for both services:
 
 ```bash
