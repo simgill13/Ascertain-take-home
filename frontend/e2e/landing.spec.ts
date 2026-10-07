@@ -1,6 +1,24 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
+test.describe('first visit', () => {
+  test.use({ storageState: { cookies: [], origins: [] } })
+
+  test('a new visitor lands on the welcome page once, then on the dashboard', async ({ page }) => {
+    await page.goto('/')
+    await expect(page).toHaveURL(/\/welcome$/)
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('built by a team of agents')
+
+    await page.getByRole('main').getByRole('link', { name: 'Open dashboard' }).first().click()
+    await expect(page).toHaveURL(/\/$/)
+    await expect(page.getByText('Patient statuses')).toBeVisible()
+
+    await page.goto('/')
+    await expect(page).toHaveURL(/\/$/)
+    await expect(page.getByText('Patient statuses')).toBeVisible()
+  })
+})
+
 test.describe('welcome landing', () => {
   test('the call to action opens the dashboard', async ({ page }) => {
     await page.goto('/welcome')

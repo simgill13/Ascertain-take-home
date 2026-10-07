@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowRightIcon } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
+import { useEffect } from 'react'
 
 import { BrandMark } from '@/components/brand-mark'
 import { Button } from '@/components/ui/button'
@@ -14,11 +15,13 @@ import {
   TechStackSection,
 } from '@/features/landing/landing-sections'
 import { ParallaxBackdrop } from '@/features/landing/parallax-backdrop'
+import { markWelcomeSeen } from '@/lib/first-visit'
 
 const ENTRANCE = { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const }
 
 export function LandingPage() {
   const reduceMotion = useReducedMotion()
+  useEffect(markWelcomeSeen, [])
   const entrance = (delay: number) =>
     reduceMotion
       ? {}

@@ -15,8 +15,8 @@ docker compose up --build
 
 | Service | URL |
 | --- | --- |
-| Dashboard | http://localhost:8080 |
-| Landing page | http://localhost:8080/welcome |
+| App | http://localhost:8080 (a first visit opens the welcome page once, then `/` is the dashboard) |
+| Welcome page | http://localhost:8080/welcome |
 | API | http://localhost:8000 |
 | API docs (Swagger) | http://localhost:8000/docs |
 
@@ -63,7 +63,7 @@ scripts/verify.sh e2e         # Playwright journeys and axe accessibility checks
 | --- | --- | --- |
 | pytest | 33 | `backend/tests/` |
 | Vitest + Testing Library | 26 | `frontend/src/**/*.test.tsx` |
-| Playwright + axe | 23 | `frontend/e2e/` |
+| Playwright + axe | 24 | `frontend/e2e/` |
 
 ## API
 

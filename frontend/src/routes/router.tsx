@@ -5,6 +5,7 @@ import {
   createRouter,
   lazyRouteComponent,
   Outlet,
+  redirect,
   stripSearchParams,
 } from '@tanstack/react-router'
 
@@ -17,6 +18,7 @@ import {
   parsePatientDetailSearch,
   parsePatientListSearch,
 } from '@/features/patients/search-params'
+import { hasSeenWelcome } from '@/lib/first-visit'
 import { NotFoundPage } from '@/routes/not-found-page'
 
 export type RouterContext = {
@@ -38,6 +40,10 @@ const shellRoute = createRoute({
 const dashboardRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/',
+  // A first-time visitor sees the welcome page once; `/` stays the dashboard home afterwards.
+  beforeLoad: () => {
+    if (!hasSeenWelcome()) throw redirect({ to: '/welcome' })
+  },
   component: lazyRouteComponent(
     () => import('@/features/dashboard/dashboard-page'),
     'DashboardPage',
