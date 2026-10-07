@@ -18,8 +18,10 @@ import {
 } from '@/features/patients/patient-form-schema'
 import type { Patient } from '@/features/patients/types'
 import { usePatientMutations } from '@/features/patients/use-patient-mutations'
+import { useBreadcrumbs } from '@/hooks/use-breadcrumbs'
 
 export function NewPatientPage() {
+  useBreadcrumbs([{ label: 'All patients', to: '/patients' }, { label: 'New patient' }])
   const navigate = useNavigate()
   const { create } = usePatientMutations()
 
@@ -31,7 +33,7 @@ export function NewPatientPage() {
 
   return (
     <>
-      <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2">
+      <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 lg:hidden">
         <Link to="/patients">
           <ArrowLeftIcon aria-hidden="true" />
           All patients
@@ -55,10 +57,18 @@ export function NewPatientPage() {
 export function EditPatientPage() {
   const { patientId } = useParams({ from: '/shell/patients/$patientId/edit' })
   const patientQuery = useQuery(patientQueryOptions(patientId))
+  const patientName = patientQuery.data
+    ? `${patientQuery.data.first_name} ${patientQuery.data.last_name}`
+    : 'Patient'
+  useBreadcrumbs([
+    { label: 'All patients', to: '/patients' },
+    { label: patientName, to: '/patients/$patientId', patientId },
+    { label: 'Edit' },
+  ])
 
   return (
     <>
-      <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2">
+      <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 lg:hidden">
         <Link to="/patients/$patientId" params={{ patientId }}>
           <ArrowLeftIcon aria-hidden="true" />
           Back to chart

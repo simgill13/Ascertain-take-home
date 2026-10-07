@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { memo, useRef } from 'react'
 
+import { AvatarInitials } from '@/components/avatar-initials'
 import { LoadingStatus } from '@/components/state/loading-status'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PatientStatusBadge } from '@/features/patients/patient-status-badge'
@@ -12,9 +13,10 @@ import { cn } from '@/lib/utils'
 const ESTIMATED_ROW_HEIGHT = 64
 const OVERSCAN_ROWS = 8
 const SKELETON_ROW_COUNT = 8
+const CONDITIONS_SHOWN = 2
 
 const ROW_GRID =
-  'grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 sm:grid-cols-[minmax(0,2fr)_1fr_1.2fr_1fr]'
+  'grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 sm:grid-cols-[minmax(0,2.2fr)_0.8fr_1.3fr_minmax(0,1.6fr)_1fr]'
 
 type PatientTableProps = {
   patients: Patient[]
@@ -48,12 +50,13 @@ export function PatientTable({ patients, isLoading, className }: PatientTablePro
             role="row"
             className={cn(
               ROW_GRID,
-              'bg-muted/60 text-muted-foreground hidden border-b px-4 py-2 text-xs font-medium tracking-wide uppercase sm:grid',
+              'text-muted-foreground hidden border-b px-4 py-2.5 text-xs font-medium sm:grid',
             )}
           >
-            <span role="columnheader">Name</span>
+            <span role="columnheader">Patient</span>
             <span role="columnheader">Age</span>
             <span role="columnheader">Last visit</span>
+            <span role="columnheader">Conditions</span>
             <span role="columnheader">Status</span>
           </div>
         </div>
@@ -86,37 +89,52 @@ export function PatientTable({ patients, isLoading, className }: PatientTablePro
 
 // Rows re-render on every scroll tick of the virtualizer; memo keeps unchanged rows static.
 const PatientRow = memo(function PatientRow({ patient }: { patient: Patient }) {
+  const hiddenConditionCount = patient.conditions.length - CONDITIONS_SHOWN
   return (
     <div
       className={cn(
         ROW_GRID,
-        'hover:bg-accent/40 items-center border-b px-4 py-3 transition-colors',
+        'hover:bg-background items-center border-b px-4 py-3 text-sm transition-colors',
       )}
     >
-      <div role="cell" className="min-w-0">
-        <Link
-          to="/patients/$patientId"
-          params={{ patientId: patient.id }}
-          className="block truncate font-medium hover:underline focus-visible:underline"
-        >
-          {patient.last_name}, {patient.first_name}
-        </Link>
-        <p className="text-muted-foreground truncate text-xs sm:hidden">
-          {formatAge(patient.age)} · {formatRelativeDate(patient.last_visit_at)}
-        </p>
+      <div role="cell" className="flex min-w-0 items-center gap-3">
+        <AvatarInitials firstName={patient.first_name} lastName={patient.last_name} />
+        <div className="min-w-0">
+          <Link
+            to="/patients/$patientId"
+            params={{ patientId: patient.id }}
+            className="block truncate font-medium hover:underline focus-visible:underline"
+          >
+            {patient.first_name} {patient.last_name}
+          </Link>
+          <p className="text-muted-foreground truncate text-xs">
+            <span className="sm:hidden">
+              {formatAge(patient.age)} · {formatRelativeDate(patient.last_visit_at)}
+            </span>
+            <span className="hidden sm:inline">DOB {formatDate(patient.date_of_birth)}</span>
+          </p>
+        </div>
       </div>
-      <div role="cell" className="hidden text-sm sm:block">
+      <div role="cell" className="hidden sm:block">
         {formatAge(patient.age)}
       </div>
-      <div role="cell" className="hidden text-sm sm:block">
+      <div role="cell" className="hidden sm:block">
         {patient.last_visit_at ? (
           <time dateTime={patient.last_visit_at}>
-            {formatRelativeDate(patient.last_visit_at)}
-            <span className="text-muted-foreground"> · {formatDate(patient.last_visit_at)}</span>
+            {formatDate(patient.last_visit_at)}
+            <span className="text-muted-foreground block text-xs">
+              {formatRelativeDate(patient.last_visit_at)}
+            </span>
           </time>
         ) : (
           <span className="text-muted-foreground">{formatRelativeDate(null)}</span>
         )}
+      </div>
+      <div role="cell" className="text-muted-foreground hidden min-w-0 truncate sm:block">
+        {patient.conditions.length === 0
+          ? '—'
+          : patient.conditions.slice(0, CONDITIONS_SHOWN).join(', ') +
+            (hiddenConditionCount > 0 ? ` +${hiddenConditionCount}` : '')}
       </div>
       <div role="cell" className="justify-self-end sm:justify-self-start">
         <PatientStatusBadge status={patient.status} />
@@ -127,19 +145,20 @@ const PatientRow = memo(function PatientRow({ patient }: { patient: Patient }) {
 
 function PatientTableSkeleton() {
   return (
-    <LoadingStatus
-      label="Loading patients"
-      className="space-y-px overflow-hidden rounded-lg border"
-    >
+    <LoadingStatus label="Loading patients" className="overflow-hidden rounded-lg border">
       {Array.from({ length: SKELETON_ROW_COUNT }, (_unused, rowIndex) => (
         <div
           key={rowIndex}
           className={cn(ROW_GRID, 'items-center border-b px-4 py-3 last:border-0')}
         >
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="hidden h-4 w-16 sm:block" />
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-8 rounded-full" />
+            <Skeleton className="h-4 w-36" />
+          </div>
+          <Skeleton className="hidden h-4 w-14 sm:block" />
           <Skeleton className="hidden h-4 w-24 sm:block" />
-          <Skeleton className="h-5 w-20 rounded-full" />
+          <Skeleton className="hidden h-4 w-32 sm:block" />
+          <Skeleton className="h-5 w-16 rounded-md" />
         </div>
       ))}
     </LoadingStatus>

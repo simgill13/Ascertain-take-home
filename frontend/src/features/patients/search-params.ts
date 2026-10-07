@@ -26,3 +26,12 @@ export const DEFAULT_PATIENT_LIST_SEARCH = {
 export function hasActiveFilters(listSearch: PatientListSearch): boolean {
   return Boolean(listSearch.search || listSearch.status)
 }
+
+export const PATIENT_DETAIL_TABS = ['overview', 'notes', 'summary'] as const
+export type PatientDetailTab = (typeof PATIENT_DETAIL_TABS)[number]
+
+export const patientDetailSearchSchema = z.object({
+  tab: z.enum(PATIENT_DETAIL_TABS).default('overview').catch('overview'),
+})
+
+export const DEFAULT_PATIENT_DETAIL_SEARCH = { tab: 'overview' } as const

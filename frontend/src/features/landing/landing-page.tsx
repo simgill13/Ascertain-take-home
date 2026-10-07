@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { ArrowRightIcon } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
 
+import { BrandMark } from '@/components/brand-mark'
 import { Button } from '@/components/ui/button'
 import { HeroCardStack } from '@/features/landing/hero-card-stack'
 import { LANDING_COPY } from '@/features/landing/landing-copy'
@@ -27,13 +28,8 @@ export function LandingPage() {
 
       <header className="relative mx-auto flex max-w-6xl items-center px-6 py-5 sm:px-8">
         <Link to="/welcome" className="flex items-center gap-2 rounded-md font-semibold">
-          <span
-            aria-hidden="true"
-            className="bg-primary text-primary-foreground grid size-7 place-items-center rounded-md text-xs font-bold"
-          >
-            N
-          </span>
-          <span className="font-display text-lg tracking-tight">Northlight</span>
+          <BrandMark />
+          <span className="text-lg tracking-tight">Northlight</span>
         </Link>
       </header>
 

@@ -12,10 +12,24 @@ async function expectNoAxeViolations(page: Page) {
   expect(summary, summary.join('\n')).toEqual([])
 }
 
+async function openPatientChart(page: Page, fullName: string) {
+  await page.goto(`/patients?search=${encodeURIComponent(fullName.split(' ')[1] ?? fullName)}`)
+  await page.getByRole('link', { name: fullName }).click()
+  await expect(page.getByRole('region', { name: 'Clinical' })).toBeVisible()
+}
+
 test.describe('accessibility', () => {
-  test('dashboard has no WCAG violations', async ({ page }) => {
+  test('statuses overview has no WCAG violations', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByText('Total patients')).toBeVisible()
+    await expect(page.getByRole('list', { name: 'Practice totals' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Active \d+$/ })).toBeVisible()
+    await expectNoAxeViolations(page)
+  })
+
+  test('overview drawer has no WCAG violations', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('button', { name: /Maria Alvarez/ }).click()
+    await expect(page.getByRole('dialog', { name: 'Maria Alvarez' })).toBeVisible()
     await expectNoAxeViolations(page)
   })
 
@@ -25,9 +39,16 @@ test.describe('accessibility', () => {
     await expectNoAxeViolations(page)
   })
 
-  test('patient detail has no WCAG violations', async ({ page }) => {
-    await page.goto('/patients?search=alvarez')
-    await page.getByRole('link', { name: 'Alvarez, Maria' }).click()
+  test('each patient detail tab has no WCAG violations', async ({ page }) => {
+    await openPatientChart(page, 'Maria Alvarez')
+    await expectNoAxeViolations(page)
+
+    const sections = page.getByRole('navigation', { name: 'Patient sections' })
+    await sections.getByRole('link', { name: 'Notes' }).click()
+    await expect(page.getByRole('list', { name: 'Clinical notes' })).toBeVisible()
+    await expectNoAxeViolations(page)
+
+    await sections.getByRole('link', { name: 'Summary' }).click()
     await expect(page.locator('#summary')).toContainText('Maria Alvarez')
     await expectNoAxeViolations(page)
   })
@@ -44,15 +65,12 @@ test.describe('accessibility', () => {
     const routes = ['/', '/patients', '/patients/new', '/welcome', '/missing-route']
     for (const route of routes) {
       await page.goto(route)
-      await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
       await page.waitForLoadState('networkidle')
       const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth)
       expect(scrollWidth, `${route} overflows`).toBeLessThanOrEqual(320)
     }
 
-    await page.goto('/patients?search=alvarez')
-    await page.getByRole('link', { name: 'Alvarez, Maria' }).click()
-    await expect(page.locator('#summary')).toContainText('Maria Alvarez')
+    await openPatientChart(page, 'Maria Alvarez')
     const detailScrollWidth = await page.evaluate(() => document.documentElement.scrollWidth)
     expect(detailScrollWidth, '/patients/:id overflows').toBeLessThanOrEqual(320)
   })

@@ -1,189 +1,187 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { ActivityIcon, CalendarClockIcon, UserPlusIcon, UsersIcon } from 'lucide-react'
+import {
+  ActivityIcon,
+  CalendarClockIcon,
+  ChevronDownIcon,
+  UserPlusIcon,
+  UsersIcon,
+  type LucideIcon,
+} from 'lucide-react'
+import { useState } from 'react'
 
-import { PageHeader } from '@/components/layout/page-header'
+import { AvatarInitials } from '@/components/avatar-initials'
 import { ErrorState } from '@/components/state/error-state'
 import { LoadingStatus } from '@/components/state/loading-status'
 import { Button } from '@/components/ui/button'
-import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { patientListQueryOptions, patientStatsQueryOptions } from '@/features/patients/api'
+import { PatientDrawer } from '@/features/patients/patient-drawer'
 import { PatientStatusBadge } from '@/features/patients/patient-status-badge'
-import { DEFAULT_PATIENT_LIST_SEARCH } from '@/features/patients/search-params'
-import { STATUS_LABELS, type PatientStats, type PatientStatus } from '@/features/patients/types'
-import { formatRelativeDate } from '@/lib/format'
+import {
+  DEFAULT_PATIENT_LIST_SEARCH,
+  type PatientListSearch,
+} from '@/features/patients/search-params'
+import {
+  STATUS_GROUP_ORDER,
+  STATUS_TINT,
+  TINT_CLASS,
+  type Tint,
+} from '@/features/patients/status-styles'
+import {
+  STATUS_LABELS,
+  type Patient,
+  type PatientStats,
+  type PatientStatus,
+} from '@/features/patients/types'
+import { useBreadcrumbs } from '@/hooks/use-breadcrumbs'
+import { formatAge, formatDate, formatRelativeDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
-const RECENT_VISITS_SEARCH = {
+// The overview reads the first page of the roster, newest visit first, and groups it by status.
+const OVERVIEW_SEARCH: PatientListSearch = {
   ...DEFAULT_PATIENT_LIST_SEARCH,
   sort: 'last_visit',
   order: 'desc',
-} as const
-const RECENT_VISITS_SHOWN = 6
-const STALE_ACTIVE_SEARCH = {
-  ...DEFAULT_PATIENT_LIST_SEARCH,
-  status: 'active',
-  sort: 'last_visit',
-  order: 'asc',
-} as const
-
-const STATUS_BAR_CLASS: Record<PatientStatus, string> = {
-  active: 'bg-status-active',
-  pending: 'bg-status-pending',
-  inactive: 'bg-status-inactive',
-  discharged: 'bg-status-discharged',
+  pageSize: 100,
 }
 
+const todayFormatter = new Intl.DateTimeFormat('en-US', {
+  weekday: 'long',
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+})
+
 export function DashboardPage() {
+  useBreadcrumbs([{ label: 'Patient statuses' }])
   const statsQuery = useQuery(patientStatsQueryOptions())
-  const recentVisitsQuery = useQuery(patientListQueryOptions(RECENT_VISITS_SEARCH))
+  const rosterQuery = useQuery(patientListQueryOptions(OVERVIEW_SEARCH))
+  const [previewPatient, setPreviewPatient] = useState<Patient | null>(null)
 
   return (
     <>
-      <PageHeader
-        title="Dashboard"
-        description="Today at Northlight Family Practice."
-        actions={
-          <Button asChild>
-            <Link to="/patients/new">
-              <UserPlusIcon aria-hidden="true" />
-              New patient
-            </Link>
-          </Button>
-        }
-      />
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <p className="text-sm">
+          <span className="text-muted-foreground">Today </span>
+          <span className="font-medium">{todayFormatter.format(new Date())}</span>
+        </p>
+        <Button asChild>
+          <Link to="/patients/new">
+            <UserPlusIcon aria-hidden="true" />
+            New patient
+          </Link>
+        </Button>
+      </div>
 
       {statsQuery.isError ? (
         <ErrorState error={statsQuery.error} onRetry={() => void statsQuery.refetch()} />
       ) : (
-        <StatCards stats={statsQuery.data} />
+        <MetricTiles stats={statsQuery.data} />
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <Card className="min-w-0 lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Patients by status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {statsQuery.isError ? (
-              <ErrorState error={statsQuery.error} onRetry={() => void statsQuery.refetch()} />
-            ) : statsQuery.data ? (
-              <StatusChart stats={statsQuery.data} />
-            ) : (
-              <LoadingStatus label="Loading status chart">
-                <Skeleton className="h-40" />
-              </LoadingStatus>
-            )}
-          </CardContent>
-        </Card>
+      <section className="mt-8" aria-labelledby="roster-heading">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 id="roster-heading" className="text-muted-foreground text-sm">
+            {rosterQuery.data
+              ? `Showing ${rosterQuery.data.items.length} of ${rosterQuery.data.total} patients`
+              : 'Patients by status'}
+          </h2>
+          <Button asChild variant="link" size="sm" className="h-auto p-0">
+            <Link to="/patients">View all patients</Link>
+          </Button>
+        </div>
 
-        <Card className="min-w-0 lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Recent visits</CardTitle>
-            <CardAction>
-              <Button asChild variant="link" size="sm" className="h-auto p-0">
-                <Link to="/patients" search={RECENT_VISITS_SEARCH}>
-                  View all
-                </Link>
-              </Button>
-            </CardAction>
-          </CardHeader>
-          <CardContent>
-            {recentVisitsQuery.isError ? (
-              <ErrorState
-                error={recentVisitsQuery.error}
-                onRetry={() => void recentVisitsQuery.refetch()}
-              />
-            ) : recentVisitsQuery.isPending ? (
-              <LoadingStatus label="Loading recent visits">
-                <Skeleton className="h-40" />
-              </LoadingStatus>
-            ) : (
-              <ul className="divide-y">
-                {recentVisitsQuery.data.items
-                  .filter((patient) => patient.last_visit_at)
-                  .slice(0, RECENT_VISITS_SHOWN)
-                  .map((patient) => (
-                    <li key={patient.id} className="flex items-center justify-between gap-3 py-2.5">
-                      <div className="min-w-0">
-                        <Link
-                          to="/patients/$patientId"
-                          params={{ patientId: patient.id }}
-                          className="block truncate text-sm font-medium hover:underline"
-                        >
-                          {patient.first_name} {patient.last_name}
-                        </Link>
-                        <p className="text-muted-foreground text-xs">
-                          {formatRelativeDate(patient.last_visit_at)}
-                        </p>
-                      </div>
-                      <PatientStatusBadge status={patient.status} />
-                    </li>
-                  ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+        {rosterQuery.isError ? (
+          <ErrorState error={rosterQuery.error} onRetry={() => void rosterQuery.refetch()} />
+        ) : rosterQuery.isPending ? (
+          <LoadingStatus label="Loading patients">
+            <Skeleton className="h-64" />
+          </LoadingStatus>
+        ) : (
+          <GroupedPatientTable patients={rosterQuery.data.items} onSelect={setPreviewPatient} />
+        )}
+      </section>
+
+      <PatientDrawer patient={previewPatient} onClose={() => setPreviewPatient(null)} />
     </>
   )
 }
 
-function StatCards({ stats }: { stats: PatientStats | undefined }) {
-  const cards = [
+type Metric = {
+  label: string
+  value: number | undefined
+  icon: LucideIcon
+  tint: Tint
+  search: PatientListSearch
+}
+
+function MetricTiles({ stats }: { stats: PatientStats | undefined }) {
+  const metrics: Metric[] = [
     {
-      label: 'Total patients',
-      value: stats?.total,
+      label: 'Pending intake',
+      value: stats?.by_status.find((entry) => entry.status === 'pending')?.count,
       icon: UsersIcon,
-      search: DEFAULT_PATIENT_LIST_SEARCH,
+      tint: 'amber',
+      search: { ...DEFAULT_PATIENT_LIST_SEARCH, status: 'pending' },
     },
     {
       label: 'Visits in last 30 days',
       value: stats?.visits_last_30_days,
       icon: ActivityIcon,
-      search: RECENT_VISITS_SEARCH,
+      tint: 'green',
+      search: OVERVIEW_SEARCH,
     },
     {
       label: 'New in last 30 days',
       value: stats?.new_last_30_days,
       icon: UserPlusIcon,
-      search: { ...DEFAULT_PATIENT_LIST_SEARCH, sort: 'created_at', order: 'desc' } as const,
+      tint: 'blue',
+      search: { ...DEFAULT_PATIENT_LIST_SEARCH, sort: 'created_at', order: 'desc' },
     },
     {
       label: 'Active, no visit in a year',
       value: stats?.without_recent_visit,
       icon: CalendarClockIcon,
-      search: STALE_ACTIVE_SEARCH,
+      tint: 'violet',
+      search: {
+        ...DEFAULT_PATIENT_LIST_SEARCH,
+        status: 'active',
+        sort: 'last_visit',
+        order: 'asc',
+      },
     },
   ]
+
   return (
-    <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="Practice totals">
-      {cards.map((card) => {
-        const Icon = card.icon
+    <ul
+      className="grid grid-cols-2 divide-x divide-y rounded-lg border sm:grid-cols-4 sm:divide-y-0"
+      aria-label="Practice totals"
+    >
+      {metrics.map((metric) => {
+        const Icon = metric.icon
         return (
-          <li key={card.label}>
-            <Card className="hover:border-ring/60 h-full gap-2 py-4 transition-colors">
-              <CardContent className="flex items-start justify-between gap-2 px-4">
-                <div>
-                  <Link
-                    to="/patients"
-                    search={card.search}
-                    className="text-muted-foreground text-xs font-medium hover:underline focus-visible:underline"
-                  >
-                    {card.label}
-                  </Link>
-                  <div className="font-display mt-1 text-3xl font-semibold tabular-nums">
-                    {card.value === undefined ? (
-                      <Skeleton className="mt-1 h-8 w-12" />
-                    ) : (
-                      card.value.toLocaleString('en-US')
-                    )}
-                  </div>
-                </div>
-                <Icon className="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
-              </CardContent>
-            </Card>
+          <li key={metric.label} className="min-w-0 p-5">
+            <span
+              aria-hidden="true"
+              className={cn('grid size-9 place-items-center rounded-md', TINT_CLASS[metric.tint])}
+            >
+              <Icon className="size-4" />
+            </span>
+            <div className="mt-4 text-2xl font-semibold tabular-nums">
+              {metric.value === undefined ? (
+                <Skeleton className="h-7 w-10" />
+              ) : (
+                metric.value.toLocaleString('en-US')
+              )}
+            </div>
+            <Link
+              to="/patients"
+              search={metric.search}
+              className="text-muted-foreground mt-0.5 block text-sm hover:underline focus-visible:underline"
+            >
+              {metric.label}
+            </Link>
           </li>
         )
       })}
@@ -191,40 +189,125 @@ function StatCards({ stats }: { stats: PatientStats | undefined }) {
   )
 }
 
-function StatusChart({ stats }: { stats: PatientStats }) {
-  const largestCount = Math.max(1, ...stats.by_status.map((statusCount) => statusCount.count))
+const GROUP_ROW_GRID =
+  'grid grid-cols-[1fr_auto] items-center gap-x-4 sm:grid-cols-[minmax(0,2fr)_0.7fr_1.2fr_minmax(0,1.5fr)]'
+
+function GroupedPatientTable({
+  patients,
+  onSelect,
+}: {
+  patients: Patient[]
+  onSelect: (patient: Patient) => void
+}) {
+  const [collapsed, setCollapsed] = useState<Set<PatientStatus>>(new Set())
+
+  const toggleGroup = (status: PatientStatus) => {
+    setCollapsed((previous) => {
+      const next = new Set(previous)
+      if (next.has(status)) next.delete(status)
+      else next.add(status)
+      return next
+    })
+  }
+
+  const groups = STATUS_GROUP_ORDER.map((status) => ({
+    status,
+    patients: patients.filter((patient) => patient.status === status),
+  })).filter((group) => group.patients.length > 0)
+
   return (
-    <ul className="space-y-3" aria-label="Patient count by status">
-      {stats.by_status.map((statusCount) => {
-        const widthPercent = Math.round((statusCount.count / largestCount) * 100)
+    <div className="overflow-hidden rounded-lg border">
+      <div
+        className={cn(
+          GROUP_ROW_GRID,
+          'text-muted-foreground hidden border-b px-4 py-2.5 text-xs font-medium sm:grid',
+        )}
+      >
+        <span>Patient</span>
+        <span>Age</span>
+        <span>Last visit</span>
+        <span>Conditions</span>
+      </div>
+
+      {groups.map((group) => {
+        const isCollapsed = collapsed.has(group.status)
+        const panelId = `group-${group.status}`
         return (
-          <li key={statusCount.status} className="text-sm">
-            <div className="mb-1 flex items-center justify-between">
-              <Link
-                to="/patients"
-                search={{ ...DEFAULT_PATIENT_LIST_SEARCH, status: statusCount.status }}
-                className="hover:underline focus-visible:underline"
+          <section key={group.status} aria-label={STATUS_LABELS[group.status]}>
+            <h3 className="bg-background border-b">
+              <button
+                type="button"
+                aria-expanded={!isCollapsed}
+                aria-controls={panelId}
+                onClick={() => toggleGroup(group.status)}
+                className="flex min-h-10 w-full items-center gap-2 px-4 py-2 text-left text-sm font-medium"
               >
-                {STATUS_LABELS[statusCount.status]}
-              </Link>
-              <span className="text-muted-foreground tabular-nums">{statusCount.count}</span>
-            </div>
-            <div
-              role="img"
-              aria-label={`${STATUS_LABELS[statusCount.status]}: ${statusCount.count} of ${stats.total}`}
-              className="bg-muted h-2.5 overflow-hidden rounded-full"
-            >
-              <div
-                className={cn(
-                  'h-full origin-left rounded-full transition-transform duration-200',
-                  STATUS_BAR_CLASS[statusCount.status],
-                )}
-                style={{ transform: `scaleX(${widthPercent / 100})` }}
-              />
-            </div>
-          </li>
+                <ChevronDownIcon
+                  aria-hidden="true"
+                  className={cn(
+                    'text-muted-foreground size-4 transition-transform duration-150',
+                    isCollapsed && '-rotate-90',
+                  )}
+                />
+                <span
+                  className={cn(
+                    'rounded-md px-2 py-0.5 text-xs',
+                    TINT_CLASS[STATUS_TINT[group.status]],
+                  )}
+                >
+                  {STATUS_LABELS[group.status]}
+                </span>
+                <span className="text-muted-foreground text-xs tabular-nums">
+                  {group.patients.length}
+                </span>
+              </button>
+            </h3>
+            {isCollapsed ? null : (
+              <ul id={panelId}>
+                {group.patients.map((patient) => (
+                  <li key={patient.id} className="border-b last:border-0">
+                    <button
+                      type="button"
+                      onClick={() => onSelect(patient)}
+                      className={cn(
+                        GROUP_ROW_GRID,
+                        'hover:bg-background w-full px-4 py-3 text-left text-sm transition-colors',
+                      )}
+                    >
+                      <span className="flex min-w-0 items-center gap-3">
+                        <AvatarInitials
+                          firstName={patient.first_name}
+                          lastName={patient.last_name}
+                        />
+                        <span className="min-w-0">
+                          <span className="block truncate font-medium">
+                            {patient.first_name} {patient.last_name}
+                          </span>
+                          <span className="text-muted-foreground block truncate text-xs">
+                            {patient.conditions[0] ?? `DOB ${formatDate(patient.date_of_birth)}`}
+                          </span>
+                        </span>
+                      </span>
+                      <span className="hidden sm:block">{formatAge(patient.age)}</span>
+                      <span className="hidden sm:block">
+                        {formatRelativeDate(patient.last_visit_at)}
+                      </span>
+                      <span className="text-muted-foreground hidden min-w-0 truncate sm:block">
+                        {patient.conditions.length > 1
+                          ? patient.conditions.slice(1).join(', ')
+                          : '—'}
+                      </span>
+                      <span className="sm:hidden">
+                        <PatientStatusBadge status={patient.status} />
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         )
       })}
-    </ul>
+    </div>
   )
 }

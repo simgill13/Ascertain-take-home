@@ -2,7 +2,6 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { Link, useNavigate, useSearch } from '@tanstack/react-router'
 import { PlusIcon, UsersIcon } from 'lucide-react'
 
-import { PageHeader } from '@/components/layout/page-header'
 import { EmptyState } from '@/components/state/empty-state'
 import { ErrorState } from '@/components/state/error-state'
 import { Button } from '@/components/ui/button'
@@ -12,8 +11,10 @@ import { PatientPagination } from '@/features/patients/patient-pagination'
 import { PatientTable } from '@/features/patients/patient-table'
 import { hasActiveFilters, type PatientListSearch } from '@/features/patients/search-params'
 import type { PatientListResponse } from '@/features/patients/types'
+import { useBreadcrumbs } from '@/hooks/use-breadcrumbs'
 
 export function PatientListPage() {
+  useBreadcrumbs([{ label: 'All patients' }])
   const listSearch = useSearch({ from: '/shell/patients' })
   const navigate = useNavigate({ from: '/patients' })
   const listQuery = useQuery(patientListQueryOptions(listSearch))
@@ -27,18 +28,15 @@ export function PatientListPage() {
 
   return (
     <>
-      <PageHeader
-        title="Patients"
-        description="Search, sort, and open a chart."
-        actions={
-          <Button asChild>
-            <Link to="/patients/new">
-              <PlusIcon aria-hidden="true" />
-              New patient
-            </Link>
-          </Button>
-        }
-      />
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold tracking-tight">Patients</h1>
+        <Button asChild>
+          <Link to="/patients/new">
+            <PlusIcon aria-hidden="true" />
+            New patient
+          </Link>
+        </Button>
+      </div>
 
       <PatientListToolbar
         listSearch={listSearch}
@@ -96,7 +94,7 @@ function NoPatientsFound({
       <EmptyState
         icon={<UsersIcon className="size-8" />}
         title="No patients match these filters"
-        description="Try a different spelling or clear the status filter."
+        description="Try a different spelling or choose another status."
         action={
           <Button
             variant="outline"

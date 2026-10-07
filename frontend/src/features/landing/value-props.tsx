@@ -42,7 +42,7 @@ function FindIllustration() {
         </span>
       </div>
       <div className="flex items-center justify-between px-1 text-sm">
-        <span className="font-medium">Alvarez, Maria</span>
+        <span className="font-medium">Maria Alvarez</span>
         <span className="text-muted-foreground text-xs">13 days ago</span>
       </div>
     </div>

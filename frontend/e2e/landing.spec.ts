@@ -11,7 +11,7 @@ test.describe('welcome landing', () => {
     await page.getByRole('main').getByRole('link', { name: 'Open dashboard' }).first().click()
 
     await expect(page).toHaveURL(/\/$/)
-    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
+    await expect(page.getByText('Patient statuses')).toBeVisible()
   })
 
   test('has no WCAG violations', async ({ page }) => {

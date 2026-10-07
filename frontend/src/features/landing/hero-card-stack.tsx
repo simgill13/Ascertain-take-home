@@ -13,6 +13,8 @@ import { useMediaQuery } from '@/hooks/use-media-query'
 
 import { Badge } from '@/components/ui/badge'
 import { SAMPLE_CARDS } from '@/features/landing/landing-copy'
+import { TINT_CLASS } from '@/features/patients/status-styles'
+import { cn } from '@/lib/utils'
 
 const CARD_OFFSETS = [
   { shiftX: 0, shiftY: 0, rotateZ: 0, depth: 0 },
@@ -157,16 +159,14 @@ function StackedCard({
           <p className="font-display text-lg font-semibold">{card.name}</p>
           <p className="text-muted-foreground text-xs">{card.meta}</p>
         </div>
-        <Badge variant="outline" className="gap-1.5 font-normal">
-          <span
-            className={
-              card.status === 'Active'
-                ? 'bg-status-active size-2 rounded-full'
-                : 'bg-status-pending size-2 rounded-full'
-            }
-          />
+        <span
+          className={cn(
+            'rounded-md px-2 py-0.5 text-xs font-medium whitespace-nowrap',
+            card.status === 'Active' ? TINT_CLASS.green : TINT_CLASS.amber,
+          )}
+        >
           {card.status}
-        </Badge>
+        </span>
       </div>
       <ul className="mt-3 flex flex-wrap gap-1.5">
         {card.tags.map((tag) => (

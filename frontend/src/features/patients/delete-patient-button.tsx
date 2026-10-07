@@ -1,6 +1,4 @@
 import { useNavigate } from '@tanstack/react-router'
-import { Trash2Icon } from 'lucide-react'
-import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -16,8 +14,13 @@ import type { Patient } from '@/features/patients/types'
 import { usePatientMutations } from '@/features/patients/use-patient-mutations'
 import { toastApiError } from '@/lib/api/describe-error'
 
-export function DeletePatientButton({ patient }: { patient: Patient }) {
-  const [confirmOpen, setConfirmOpen] = useState(false)
+type DeletePatientDialogProps = {
+  patient: Patient
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+export function DeletePatientDialog({ patient, open, onOpenChange }: DeletePatientDialogProps) {
   const navigate = useNavigate()
   const { remove } = usePatientMutations()
   const fullName = `${patient.first_name} ${patient.last_name}`
@@ -33,38 +36,24 @@ export function DeletePatientButton({ patient }: { patient: Patient }) {
   }
 
   return (
-    <>
-      <Button
-        variant="ghost"
-        className="text-muted-foreground hover:text-destructive"
-        onClick={() => setConfirmOpen(true)}
-      >
-        <Trash2Icon aria-hidden="true" />
-        Delete
-      </Button>
-      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete {fullName}?</DialogTitle>
-            <DialogDescription>
-              The chart and all of its clinical notes will be permanently removed. This cannot be
-              undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setConfirmOpen(false)}
-              disabled={remove.isPending}
-            >
-              Keep patient
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete} disabled={remove.isPending}>
-              Delete patient
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete {fullName}?</DialogTitle>
+          <DialogDescription>
+            The chart and all of its clinical notes will be permanently removed. This cannot be
+            undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={remove.isPending}>
+            Keep patient
+          </Button>
+          <Button variant="destructive" onClick={confirmDelete} disabled={remove.isPending}>
+            Delete patient
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

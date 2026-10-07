@@ -11,7 +11,9 @@ import {
 import { AppShell } from '@/components/layout/app-shell'
 import { RouteErrorPage } from '@/routes/route-error-page'
 import {
+  DEFAULT_PATIENT_DETAIL_SEARCH,
   DEFAULT_PATIENT_LIST_SEARCH,
+  patientDetailSearchSchema,
   patientListSearchSchema,
 } from '@/features/patients/search-params'
 import { NotFoundPage } from '@/routes/not-found-page'
@@ -64,6 +66,8 @@ const newPatientRoute = createRoute({
 const patientDetailRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/patients/$patientId',
+  validateSearch: patientDetailSearchSchema,
+  search: { middlewares: [stripSearchParams(DEFAULT_PATIENT_DETAIL_SEARCH)] },
   component: lazyRouteComponent(
     () => import('@/features/patients/patient-detail-page'),
     'PatientDetailPage',

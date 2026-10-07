@@ -35,6 +35,6 @@ describe('PatientListToolbar', () => {
       />,
     )
 
-    expect(screen.getByText('17 patients')).toBeInTheDocument()
+    expect(screen.getByText('Showing 17 patients')).toBeInTheDocument()
   })
 })

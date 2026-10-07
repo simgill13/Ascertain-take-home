@@ -1,28 +1,23 @@
-import { Badge } from '@/components/ui/badge'
+import { STATUS_TINT, TINT_CLASS } from '@/features/patients/status-styles'
 import { STATUS_LABELS, type PatientStatus } from '@/features/patients/types'
 import { cn } from '@/lib/utils'
-
-const STATUS_DOT_CLASS: Record<PatientStatus, string> = {
-  active: 'bg-status-active',
-  pending: 'bg-status-pending',
-  inactive: 'bg-status-inactive',
-  discharged: 'bg-status-discharged',
-}
 
 type PatientStatusBadgeProps = {
   status: PatientStatus
   className?: string
 }
 
-/** Status is always shown as a colored dot plus a text label, never color alone. */
+/** Tinted chip; the label text carries the meaning so color is never the only cue. */
 export function PatientStatusBadge({ status, className }: PatientStatusBadgeProps) {
   return (
-    <Badge variant="outline" className={cn('gap-1.5 font-normal', className)}>
-      <span
-        aria-hidden="true"
-        className={cn('size-2 shrink-0 rounded-full', STATUS_DOT_CLASS[status])}
-      />
+    <span
+      className={cn(
+        'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium whitespace-nowrap',
+        TINT_CLASS[STATUS_TINT[status]],
+        className,
+      )}
+    >
       {STATUS_LABELS[status]}
-    </Badge>
+    </span>
   )
 }

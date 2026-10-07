@@ -43,7 +43,8 @@ export async function createPatientThroughUi(page: Page, lastName: string) {
 }
 
 export async function deletePatientThroughUi(page: Page) {
-  await page.getByRole('button', { name: 'Delete', exact: true }).click()
+  await page.getByRole('button', { name: 'More actions' }).click()
+  await page.getByRole('menuitem', { name: 'Delete patient' }).click()
   await page.getByRole('button', { name: 'Delete patient' }).click()
   await expect(page).toHaveURL(/\/patients$/)
 }

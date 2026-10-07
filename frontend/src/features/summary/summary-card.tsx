@@ -54,7 +54,7 @@ export function SummaryCard({ patientId }: SummaryCardProps) {
           <Button
             variant="ghost"
             size="sm"
-            disabled={summaryQuery.isFetching}
+            aria-busy={summaryQuery.isFetching}
             onClick={() => void summaryQuery.refetch()}
           >
             <RefreshCwIcon

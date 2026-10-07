@@ -13,18 +13,33 @@ test.afterEach(async ({ request }) => {
 })
 
 test.describe('coordinator journeys', () => {
-  test('dashboard shows practice totals and links to the patient list', async ({ page }) => {
+  test('statuses overview shows totals, grouped patients, and a preview drawer', async ({
+    page,
+  }) => {
     await page.goto('/')
 
-    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
-    await expect(page.getByText('Total patients')).toBeVisible()
-    await expect(page.getByRole('img', { name: /Active: \d+ of \d+/ })).toBeVisible()
+    await expect(page.getByText('Patient statuses')).toBeVisible()
+    await expect(page.getByRole('list', { name: 'Practice totals' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Active \d+$/ })).toBeVisible()
 
+    await page.getByRole('button', { name: /Maria Alvarez/ }).click()
+    const drawer = page.getByRole('dialog', { name: 'Maria Alvarez' })
+    await expect(drawer).toBeVisible()
+    await expect(drawer.getByText('Penicillin')).toBeVisible()
+
+    await drawer.getByRole('link', { name: 'Open chart' }).click()
+    await expect(page).toHaveURL(/\/patients\/[0-9a-f-]{36}$/)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Maria Alvarez')
+  })
+
+  test('sidebar navigation reaches the patient list', async ({ page }) => {
+    await page.goto('/')
     await page
-      .getByRole('navigation', { name: 'Primary' })
+      .getByRole('navigation', { name: 'Sidebar' })
       .getByRole('link', { name: 'Patients' })
       .click()
     await expect(page).toHaveURL(/\/patients$/)
+    await expect(page.getByRole('table', { name: 'Patients' })).toBeVisible()
   })
 
   test('search narrows the list without blocking typing and lands in the URL', async ({ page }) => {
@@ -36,8 +51,8 @@ test.describe('coordinator journeys', () => {
     await expect(searchBox).toHaveValue('alvar')
 
     await expect(page).toHaveURL(/search=alvar/)
-    await expect(page.getByRole('link', { name: 'Alvarez, Maria' })).toBeVisible()
-    await expect(page.getByText('1 patient', { exact: true })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Maria Alvarez' })).toBeVisible()
+    await expect(page.getByText('Showing 1 patient', { exact: true })).toBeVisible()
 
     await page.getByRole('button', { name: 'Clear filters' }).click()
     await expect(searchBox).toHaveValue('')
@@ -53,22 +68,23 @@ test.describe('coordinator journeys', () => {
     await searchBox.pressSequentially('Cald', { delay: 20 })
 
     await expect(searchBox).toHaveValue('Henry Cald')
-    await expect(page.getByRole('link', { name: 'Caldwell, Henry' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Henry Caldwell' })).toBeVisible()
   })
 
-  test('status filter and sort are reflected in the URL and results', async ({ page }) => {
+  test('status tabs and sort are reflected in the URL and results', async ({ page }) => {
     await page.goto('/patients')
 
-    await page.getByLabel('Status').click()
-    await page.getByRole('option', { name: 'Pending intake' }).click()
+    await page.getByRole('tab', { name: 'Pending intake' }).click()
     await expect(page).toHaveURL(/status=pending/)
-    const statusBadges = page.getByRole('table', { name: 'Patients' }).getByText('Pending intake')
-    await expect(statusBadges.first()).toBeVisible()
-    await expect(
-      page.getByRole('table', { name: 'Patients' }).getByText('Active', { exact: true }),
-    ).toHaveCount(0)
+    await expect(page.getByRole('tab', { name: 'Pending intake' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    const table = page.getByRole('table', { name: 'Patients' })
+    await expect(table.getByText('Pending intake').first()).toBeVisible()
+    await expect(table.getByText('Active', { exact: true })).toHaveCount(0)
 
-    await page.getByLabel('Sort by').click()
+    await page.getByRole('combobox', { name: 'Sort by' }).click()
     await page.getByRole('option', { name: 'Age' }).click()
     await expect(page).toHaveURL(/sort=age/)
   })
@@ -79,6 +95,7 @@ test.describe('coordinator journeys', () => {
     await expect(page.getByRole('heading', { name: 'This page does not exist' })).toBeVisible()
     await page.getByRole('link', { name: 'Go to dashboard' }).click()
     await expect(page).toHaveURL(/\/$/)
+    await expect(page.getByText('Patient statuses')).toBeVisible()
   })
 
   test('create, edit, add a note, read the summary, delete', async ({ page }) => {
@@ -89,14 +106,19 @@ test.describe('coordinator journeys', () => {
     await expect(clinicalCard.getByText('Latex')).toBeVisible()
     await expect(clinicalCard.getByText('Asthma')).toBeVisible()
 
-    await page.getByRole('link', { name: 'Edit' }).click()
+    await page.getByRole('button', { name: 'More actions' }).click()
+    await page.getByRole('menuitem', { name: 'Edit patient' }).click()
     await expect(page.getByRole('heading', { name: `Edit Playwright ${lastName}` })).toBeVisible()
     await page.getByLabel('Status').click()
     await page.getByRole('option', { name: 'Pending intake' }).click()
     await page.getByRole('button', { name: 'Save changes' }).click()
-    await expect(page.getByRole('heading', { level: 1 })).toContainText(lastName)
-    await expect(page.getByText('Pending intake')).toBeVisible()
+    await expect(page).toHaveURL(/\/patients\/[0-9a-f-]{36}$/)
+    const chartHeading = page.getByRole('heading', { level: 1 })
+    await expect(chartHeading).toHaveText(`Playwright ${lastName}`)
+    await expect(chartHeading.locator('..').getByText('Pending intake')).toBeVisible()
 
+    const sections = page.getByRole('navigation', { name: 'Patient sections' })
+    await sections.getByRole('link', { name: 'Notes' }).click()
     await page
       .getByRole('textbox', { name: 'Note' })
       .fill('Intake call completed. Records requested.')
@@ -108,6 +130,7 @@ test.describe('coordinator journeys', () => {
         .getByText('Intake call completed. Records requested.'),
     ).toBeVisible()
 
+    await sections.getByRole('link', { name: 'Summary' }).click()
     const summaryCard = page.locator('#summary')
     await expect(summaryCard).toContainText('Intake call completed')
     await expect(summaryCard).toContainText('Latex')

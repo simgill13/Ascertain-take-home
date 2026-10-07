@@ -3,12 +3,18 @@ import { persist } from 'zustand/middleware'
 
 export type Theme = 'light' | 'dark'
 
+export type Breadcrumb =
+  | { label: string; to?: '/' | '/patients' }
+  | { label: string; to: '/patients/$patientId'; patientId: string }
+
 type UiState = {
   theme: Theme
   sidebarCollapsed: boolean
+  breadcrumbs: Breadcrumb[]
   setTheme: (theme: Theme) => void
   toggleTheme: () => void
   toggleSidebar: () => void
+  setBreadcrumbs: (breadcrumbs: Breadcrumb[]) => void
 }
 
 function readInitialTheme(): Theme {
@@ -26,12 +32,14 @@ export const useUiStore = create<UiState>()(
     (set, get) => ({
       theme: readInitialTheme(),
       sidebarCollapsed: false,
+      breadcrumbs: [],
       setTheme: (theme) => {
         applyThemeToDocument(theme)
         set({ theme })
       },
       toggleTheme: () => get().setTheme(get().theme === 'dark' ? 'light' : 'dark'),
       toggleSidebar: () => set({ sidebarCollapsed: !get().sidebarCollapsed }),
+      setBreadcrumbs: (breadcrumbs) => set({ breadcrumbs }),
     }),
     {
       name: 'northlight-ui',

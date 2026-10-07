@@ -22,11 +22,17 @@ import {
 } from '@/features/patients/types'
 import { useDebouncedCallback } from '@/hooks/use-debounced-callback'
 import { formatCount } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
 const SEARCH_DEBOUNCE_MS = 250
-const ALL_STATUSES = 'all'
 // Newest first is the useful default for date sorts; names and status read best ascending.
 const DESCENDING_BY_DEFAULT: ReadonlySet<PatientSortField> = new Set(['last_visit', 'created_at'])
+
+type StatusTab = { value: PatientStatus | undefined; label: string }
+const STATUS_TABS: StatusTab[] = [
+  { value: undefined, label: 'All patients' },
+  ...PATIENT_STATUSES.map((status) => ({ value: status, label: STATUS_LABELS[status] })),
+]
 
 type PatientListToolbarProps = {
   listSearch: PatientListSearch
@@ -58,125 +64,130 @@ export function PatientListToolbar({
   }
 
   return (
-    <div className="mb-4 flex flex-col gap-3">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end">
-        <div className="flex-1">
-          <Label htmlFor="patient-search">Search</Label>
-          <div className="relative mt-1.5">
-            <SearchIcon
-              className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
-              aria-hidden="true"
-            />
-            <Input
-              id="patient-search"
-              type="search"
-              placeholder="Name or email"
-              value={searchText}
-              autoComplete="off"
-              className="pl-9"
-              onChange={(event) => {
-                setSearchText(event.target.value)
-                commitSearch(event.target.value)
-              }}
-            />
-          </div>
-        </div>
+    <div className="mb-4 space-y-4">
+      <div className="flex flex-col gap-3 border-b lg:flex-row lg:items-end lg:justify-between">
+        <StatusTabs
+          value={listSearch.status}
+          onChange={(status) => onChange({ status, page: 1 })}
+        />
 
-        <div className="grid grid-cols-2 gap-3 sm:flex sm:items-end">
-          <div>
-            <Label htmlFor="patient-status-filter">Status</Label>
-            <Select
-              value={listSearch.status ?? ALL_STATUSES}
-              onValueChange={(value) =>
-                onChange({
-                  status: value === ALL_STATUSES ? undefined : (value as PatientStatus),
-                  page: 1,
-                })
-              }
-            >
-              <SelectTrigger id="patient-status-filter" className="mt-1.5 w-full sm:w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_STATUSES}>All statuses</SelectItem>
-                {PATIENT_STATUSES.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {STATUS_LABELS[status]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="patient-sort">Sort by</Label>
-            <div className="mt-1.5 flex gap-1">
-              <Select
-                value={listSearch.sort}
-                onValueChange={(value) => {
-                  const sort = value as PatientSortField
-                  onChange({
-                    sort,
-                    order: DESCENDING_BY_DEFAULT.has(sort) ? 'desc' : 'asc',
-                    page: 1,
-                  })
-                }}
-              >
-                <SelectTrigger id="patient-sort" className="min-w-0 flex-1 sm:w-40 sm:flex-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PATIENT_SORT_FIELDS.map((field) => (
-                    <SelectItem key={field} value={field}>
-                      {SORT_LABELS[field]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                size="icon"
-                className="shrink-0"
-                aria-label={
-                  listSearch.order === 'asc'
-                    ? 'Sorted ascending. Switch to descending'
-                    : 'Sorted descending. Switch to ascending'
-                }
-                onClick={() =>
-                  onChange({ order: listSearch.order === 'asc' ? 'desc' : 'asc', page: 1 })
-                }
-              >
-                {listSearch.order === 'asc' ? (
-                  <ArrowUpNarrowWideIcon />
-                ) : (
-                  <ArrowDownWideNarrowIcon />
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="text-muted-foreground flex items-center gap-3 text-sm">
-        <span aria-live="polite">
-          {isFetching
-            ? 'Updating…'
-            : resultCount === null
-              ? ''
-              : formatCount(resultCount, 'patient')}
-        </span>
-        {hasActiveFilters(listSearch) ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7"
-            onClick={() => onChange({ search: undefined, status: undefined, page: 1 })}
+        <div className="flex items-center gap-2 pb-3 lg:pb-2">
+          <Label htmlFor="patient-sort" className="sr-only">
+            Sort by
+          </Label>
+          <Select
+            value={listSearch.sort}
+            onValueChange={(value) => {
+              const sort = value as PatientSortField
+              onChange({ sort, order: DESCENDING_BY_DEFAULT.has(sort) ? 'desc' : 'asc', page: 1 })
+            }}
           >
-            <XIcon aria-hidden="true" />
-            Clear filters
+            <SelectTrigger id="patient-sort" size="sm" className="bg-secondary w-44 border-0">
+              <span className="text-muted-foreground">Sort</span>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PATIENT_SORT_FIELDS.map((field) => (
+                <SelectItem key={field} value={field}>
+                  {SORT_LABELS[field]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="secondary"
+            size="icon-sm"
+            className="shrink-0"
+            aria-label={
+              listSearch.order === 'asc'
+                ? 'Sorted ascending. Switch to descending'
+                : 'Sorted descending. Switch to ascending'
+            }
+            onClick={() =>
+              onChange({ order: listSearch.order === 'asc' ? 'desc' : 'asc', page: 1 })
+            }
+          >
+            {listSearch.order === 'asc' ? <ArrowUpNarrowWideIcon /> : <ArrowDownWideNarrowIcon />}
           </Button>
-        ) : null}
+        </div>
       </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative w-full sm:max-w-sm">
+          <Label htmlFor="patient-search" className="sr-only">
+            Search
+          </Label>
+          <SearchIcon
+            className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+            aria-hidden="true"
+          />
+          <Input
+            id="patient-search"
+            type="search"
+            placeholder="Search by name or email"
+            value={searchText}
+            autoComplete="off"
+            className="bg-background pl-9"
+            onChange={(event) => {
+              setSearchText(event.target.value)
+              commitSearch(event.target.value)
+            }}
+          />
+        </div>
+        <div className="text-muted-foreground flex items-center gap-3 text-sm">
+          <span aria-live="polite">
+            {isFetching
+              ? 'Updating…'
+              : resultCount === null
+                ? ''
+                : `Showing ${formatCount(resultCount, 'patient')}`}
+          </span>
+          {hasActiveFilters(listSearch) ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7"
+              onClick={() => onChange({ search: undefined, status: undefined, page: 1 })}
+            >
+              <XIcon aria-hidden="true" />
+              Clear filters
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function StatusTabs({
+  value,
+  onChange,
+}: {
+  value: PatientStatus | undefined
+  onChange: (status: PatientStatus | undefined) => void
+}) {
+  return (
+    <div role="tablist" aria-label="Filter by status" className="-mb-px flex gap-1 overflow-x-auto">
+      {STATUS_TABS.map((tab) => {
+        const selected = tab.value === value
+        return (
+          <button
+            key={tab.label}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            onClick={() => onChange(tab.value)}
+            className={cn(
+              'hover:text-foreground min-h-10 shrink-0 border-b-2 px-3 text-sm transition-colors',
+              selected
+                ? 'border-foreground text-foreground font-medium'
+                : 'text-muted-foreground border-transparent',
+            )}
+          >
+            {tab.label}
+          </button>
+        )
+      })}
     </div>
   )
 }

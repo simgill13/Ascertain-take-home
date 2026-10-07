@@ -10,33 +10,33 @@ export function AppShell() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="flex min-h-dvh">
       <a
         href="#main-content"
         className="bg-primary text-primary-foreground sr-only z-50 rounded-md px-3 py-2 focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
       >
         Skip to main content
       </a>
-      <AppHeader onOpenMobileNav={() => setMobileNavOpen(true)} />
 
-      <div className="flex flex-1">
-        <aside className="hidden w-60 shrink-0 border-r lg:block">
-          <AppSidebar className="sticky top-14 h-[calc(100dvh-3.5rem)]" />
-        </aside>
+      <aside className="border-sidebar-border hidden w-56 shrink-0 border-r lg:block">
+        <AppSidebar className="sticky top-0 h-dvh" />
+      </aside>
 
-        <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-          <SheetContent
-            side="left"
-            className="w-72 p-0 data-[state=closed]:duration-150 data-[state=open]:duration-200"
-          >
-            <SheetHeader className="sr-only">
-              <SheetTitle>Navigation</SheetTitle>
-            </SheetHeader>
-            <AppSidebar onNavigate={() => setMobileNavOpen(false)} />
-          </SheetContent>
-        </Sheet>
+      <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+        <SheetContent
+          side="left"
+          className="w-72 p-0 data-[state=closed]:duration-150 data-[state=open]:duration-200"
+        >
+          <SheetHeader className="sr-only">
+            <SheetTitle>Navigation</SheetTitle>
+          </SheetHeader>
+          <AppSidebar onNavigate={() => setMobileNavOpen(false)} />
+        </SheetContent>
+      </Sheet>
 
-        <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+      <div className="bg-card flex min-w-0 flex-1 flex-col">
+        <AppHeader onOpenMobileNav={() => setMobileNavOpen(true)} />
+        <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 p-4 sm:p-6">
           <Outlet />
         </main>
       </div>
