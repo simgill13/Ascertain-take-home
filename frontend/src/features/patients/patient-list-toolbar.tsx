@@ -127,7 +127,7 @@ export function PatientListToolbar({
             placeholder="Search by name or email"
             value={searchText}
             autoComplete="off"
-            className="bg-background pl-9"
+            className="bg-secondary rounded-lg border-0 pl-9 shadow-none"
             onChange={(event) => {
               setSearchText(event.target.value)
               commitSearch(event.target.value)
@@ -167,18 +167,17 @@ function StatusTabs({
   onChange: (status: PatientStatus | undefined) => void
 }) {
   return (
-    <div role="tablist" aria-label="Filter by status" className="-mb-px flex gap-1 overflow-x-auto">
+    <nav aria-label="Filter by status" className="-mb-px flex flex-wrap gap-x-6 sm:flex-nowrap">
       {STATUS_TABS.map((tab) => {
         const selected = tab.value === value
         return (
           <button
             key={tab.label}
             type="button"
-            role="tab"
-            aria-selected={selected}
+            aria-pressed={selected}
             onClick={() => onChange(tab.value)}
             className={cn(
-              'hover:text-foreground min-h-10 shrink-0 border-b-2 px-3 text-sm transition-colors',
+              'hover:text-foreground min-h-10 shrink-0 border-b-2 px-0.5 text-sm transition-colors focus-visible:outline-offset-[-2px]',
               selected
                 ? 'border-foreground text-foreground font-medium'
                 : 'text-muted-foreground border-transparent',
@@ -188,6 +187,6 @@ function StatusTabs({
           </button>
         )
       })}
-    </div>
+    </nav>
   )
 }

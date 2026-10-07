@@ -146,7 +146,7 @@ function SummaryPill({ patient }: { patient: Patient }) {
 function DetailTabs({ patientId, activeTab }: { patientId: string; activeTab: PatientDetailTab }) {
   return (
     <nav aria-label="Patient sections" className="border-b">
-      <ul className="-mb-px flex gap-1">
+      <ul className="-mb-px flex gap-6">
         {PATIENT_DETAIL_TABS.map((tab) => (
           <li key={tab}>
             <Link
@@ -156,7 +156,7 @@ function DetailTabs({ patientId, activeTab }: { patientId: string; activeTab: Pa
               replace
               activeOptions={{ exact: true, includeSearch: true }}
               className={cn(
-                'hover:text-foreground flex min-h-10 items-center border-b-2 px-3 text-sm transition-colors',
+                'hover:text-foreground flex min-h-10 items-center border-b-2 px-0.5 text-sm transition-colors focus-visible:outline-offset-[-2px]',
                 tab === activeTab
                   ? 'border-foreground text-foreground font-medium'
                   : 'text-muted-foreground border-transparent',

@@ -50,7 +50,7 @@ export function PatientTable({ patients, isLoading, className }: PatientTablePro
             role="row"
             className={cn(
               ROW_GRID,
-              'text-muted-foreground hidden border-b px-4 py-2.5 text-xs font-medium sm:grid',
+              'text-foreground hidden border-b px-4 py-3 text-[13px] font-medium sm:grid',
             )}
           >
             <span role="columnheader">Patient</span>
@@ -69,14 +69,12 @@ export function PatientTable({ patients, isLoading, className }: PatientTablePro
               return (
                 <div
                   key={patient.id}
-                  role="row"
-                  aria-rowindex={virtualRow.index + 2}
                   data-index={virtualRow.index}
                   ref={virtualizer.measureElement}
                   className="absolute top-0 left-0 w-full"
                   style={{ transform: `translateY(${virtualRow.start}px)` }}
                 >
-                  <PatientRow patient={patient} />
+                  <PatientRow patient={patient} rowIndex={virtualRow.index + 2} />
                 </div>
               )
             })}
@@ -88,10 +86,18 @@ export function PatientTable({ patients, isLoading, className }: PatientTablePro
 }
 
 // Rows re-render on every scroll tick of the virtualizer; memo keeps unchanged rows static.
-const PatientRow = memo(function PatientRow({ patient }: { patient: Patient }) {
+const PatientRow = memo(function PatientRow({
+  patient,
+  rowIndex,
+}: {
+  patient: Patient
+  rowIndex: number
+}) {
   const hiddenConditionCount = patient.conditions.length - CONDITIONS_SHOWN
   return (
     <div
+      role="row"
+      aria-rowindex={rowIndex}
       className={cn(
         ROW_GRID,
         'hover:bg-background items-center border-b px-4 py-3 text-sm transition-colors',
@@ -103,7 +109,7 @@ const PatientRow = memo(function PatientRow({ patient }: { patient: Patient }) {
           <Link
             to="/patients/$patientId"
             params={{ patientId: patient.id }}
-            className="block truncate font-medium hover:underline focus-visible:underline"
+            className="block truncate font-medium hover:underline focus-visible:underline focus-visible:outline-offset-[-2px]"
           >
             {patient.first_name} {patient.last_name}
           </Link>

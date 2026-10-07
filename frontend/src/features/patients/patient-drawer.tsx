@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { NotebookPenIcon } from 'lucide-react'
+import type { RefObject } from 'react'
 
 import { FactGrid } from '@/components/fact-grid'
 import { Badge } from '@/components/ui/badge'
@@ -19,15 +20,22 @@ import { formatAge, formatDate, formatRelativeDate } from '@/lib/format'
 type PatientDrawerProps = {
   patient: Patient | null
   onClose: () => void
+  /** Element that opened the drawer; focus returns there on close. */
+  returnFocusTo: RefObject<HTMLElement | null>
 }
 
 /** Right-side preview of a patient; the chart itself opens from the footer. */
-export function PatientDrawer({ patient, onClose }: PatientDrawerProps) {
+export function PatientDrawer({ patient, onClose, returnFocusTo }: PatientDrawerProps) {
   return (
     <Sheet open={patient !== null} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="flex w-full flex-col gap-0 p-0 data-[state=closed]:duration-150 data-[state=open]:duration-200 sm:max-w-md"
+        className="flex w-full flex-col gap-0 p-0 data-[state=closed]:duration-150 data-[state=open]:duration-200 sm:max-w-sm"
+        onCloseAutoFocus={(event) => {
+          // The sheet is controlled without a trigger, so Radix has nothing to return focus to.
+          event.preventDefault()
+          returnFocusTo.current?.focus()
+        }}
       >
         {patient ? (
           <>
@@ -81,7 +89,7 @@ export function PatientDrawer({ patient, onClose }: PatientDrawerProps) {
                   Open chart
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="flex-1">
+              <Button asChild variant="secondary" className="flex-1">
                 <Link
                   to="/patients/$patientId"
                   params={{ patientId: patient.id }}

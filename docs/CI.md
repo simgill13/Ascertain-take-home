@@ -24,7 +24,7 @@ Measured locally on 2026-10-06 (Apple Silicon, warm caches). CI numbers go here 
 | --- | --- | --- |
 | pytest | 24 | 1.9s (1.1s is the one-time Alembic migration in the session fixture) |
 | Vitest | 26 | 2.5s |
-| Playwright (chromium, 1 worker) | 20 | 35s |
+| Playwright (chromium, 1 worker) | 23 | 36s |
 
 ## Sharding decision
 

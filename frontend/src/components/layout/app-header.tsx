@@ -4,13 +4,10 @@ import { Fragment } from 'react'
 
 import { BrandMark } from '@/components/brand-mark'
 import { Button } from '@/components/ui/button'
+import { SheetTrigger } from '@/components/ui/sheet'
 import { useUiStore, type Breadcrumb } from '@/stores/ui-store'
 
-type AppHeaderProps = {
-  onOpenMobileNav: () => void
-}
-
-export function AppHeader({ onOpenMobileNav }: AppHeaderProps) {
+export function AppHeader() {
   const theme = useUiStore((state) => state.theme)
   const toggleTheme = useUiStore((state) => state.toggleTheme)
   const breadcrumbs = useUiStore((state) => state.breadcrumbs)
@@ -18,15 +15,11 @@ export function AppHeader({ onOpenMobileNav }: AppHeaderProps) {
 
   return (
     <header className="bg-card flex h-14 shrink-0 items-center gap-2 border-b px-3 sm:px-5">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="lg:hidden"
-        aria-label="Open navigation"
-        onClick={onOpenMobileNav}
-      >
-        <MenuIcon />
-      </Button>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation">
+          <MenuIcon />
+        </Button>
+      </SheetTrigger>
 
       <Link to="/" className="flex items-center gap-1.5 rounded-md font-semibold lg:hidden">
         <BrandMark />

@@ -8,7 +8,7 @@ import {
   UsersIcon,
   type LucideIcon,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { AvatarInitials } from '@/components/avatar-initials'
 import { ErrorState } from '@/components/state/error-state'
@@ -58,10 +58,16 @@ export function DashboardPage() {
   const statsQuery = useQuery(patientStatsQueryOptions())
   const rosterQuery = useQuery(patientListQueryOptions(OVERVIEW_SEARCH))
   const [previewPatient, setPreviewPatient] = useState<Patient | null>(null)
+  const previewOpener = useRef<HTMLElement | null>(null)
+
+  const openPreview = (patient: Patient, opener: HTMLElement) => {
+    previewOpener.current = opener
+    setPreviewPatient(patient)
+  }
 
   return (
     <>
-      <div className="mb-5 flex items-center justify-between gap-3">
+      <div className="-mx-4 mb-5 flex items-center justify-between gap-3 border-b px-4 pb-4 sm:-mx-6 sm:px-6">
         <p className="text-sm">
           <span className="text-muted-foreground">Today </span>
           <span className="font-medium">{todayFormatter.format(new Date())}</span>
@@ -99,11 +105,15 @@ export function DashboardPage() {
             <Skeleton className="h-64" />
           </LoadingStatus>
         ) : (
-          <GroupedPatientTable patients={rosterQuery.data.items} onSelect={setPreviewPatient} />
+          <GroupedPatientTable patients={rosterQuery.data.items} onSelect={openPreview} />
         )}
       </section>
 
-      <PatientDrawer patient={previewPatient} onClose={() => setPreviewPatient(null)} />
+      <PatientDrawer
+        patient={previewPatient}
+        onClose={() => setPreviewPatient(null)}
+        returnFocusTo={previewOpener}
+      />
     </>
   )
 }
@@ -155,32 +165,32 @@ function MetricTiles({ stats }: { stats: PatientStats | undefined }) {
 
   return (
     <ul
-      className="grid grid-cols-2 divide-x divide-y rounded-lg border sm:grid-cols-4 sm:divide-y-0"
+      className="grid grid-cols-2 divide-x divide-y border-y sm:grid-cols-4 sm:divide-y-0"
       aria-label="Practice totals"
     >
       {metrics.map((metric) => {
         const Icon = metric.icon
         return (
-          <li key={metric.label} className="min-w-0 p-5">
-            <span
-              aria-hidden="true"
-              className={cn('grid size-9 place-items-center rounded-md', TINT_CLASS[metric.tint])}
-            >
-              <Icon className="size-4" />
-            </span>
-            <div className="mt-4 text-2xl font-semibold tabular-nums">
-              {metric.value === undefined ? (
-                <Skeleton className="h-7 w-10" />
-              ) : (
-                metric.value.toLocaleString('en-US')
-              )}
-            </div>
+          <li key={metric.label} className="min-w-0">
             <Link
               to="/patients"
               search={metric.search}
-              className="text-muted-foreground mt-0.5 block text-sm hover:underline focus-visible:underline"
+              className="hover:bg-background block h-full p-5 transition-colors focus-visible:outline-offset-[-2px]"
             >
-              {metric.label}
+              <span
+                aria-hidden="true"
+                className={cn('grid size-8 place-items-center rounded-md', TINT_CLASS[metric.tint])}
+              >
+                <Icon className="size-4" />
+              </span>
+              <span className="mt-4 block text-xl font-semibold tabular-nums">
+                {metric.value === undefined ? (
+                  <Skeleton className="inline-block h-6 w-10 align-middle" />
+                ) : (
+                  metric.value.toLocaleString('en-US')
+                )}
+              </span>
+              <span className="text-muted-foreground mt-0.5 block text-sm">{metric.label}</span>
             </Link>
           </li>
         )
@@ -197,7 +207,7 @@ function GroupedPatientTable({
   onSelect,
 }: {
   patients: Patient[]
-  onSelect: (patient: Patient) => void
+  onSelect: (patient: Patient, opener: HTMLElement) => void
 }) {
   const [collapsed, setCollapsed] = useState<Set<PatientStatus>>(new Set())
 
@@ -218,6 +228,7 @@ function GroupedPatientTable({
   return (
     <div className="overflow-hidden rounded-lg border">
       <div
+        aria-hidden="true"
         className={cn(
           GROUP_ROW_GRID,
           'text-muted-foreground hidden border-b px-4 py-2.5 text-xs font-medium sm:grid',
@@ -234,13 +245,13 @@ function GroupedPatientTable({
         const panelId = `group-${group.status}`
         return (
           <section key={group.status} aria-label={STATUS_LABELS[group.status]}>
-            <h3 className="bg-background border-b">
+            <h3 className="bg-background dark:bg-muted border-b">
               <button
                 type="button"
                 aria-expanded={!isCollapsed}
-                aria-controls={panelId}
+                aria-controls={isCollapsed ? undefined : panelId}
                 onClick={() => toggleGroup(group.status)}
-                className="flex min-h-10 w-full items-center gap-2 px-4 py-2 text-left text-sm font-medium"
+                className="flex min-h-10 w-full items-center gap-2 px-4 py-2 text-left text-sm font-medium focus-visible:outline-offset-[-2px]"
               >
                 <ChevronDownIcon
                   aria-hidden="true"
@@ -251,7 +262,7 @@ function GroupedPatientTable({
                 />
                 <span
                   className={cn(
-                    'rounded-md px-2 py-0.5 text-xs',
+                    'rounded-full px-2.5 py-0.5 text-xs',
                     TINT_CLASS[STATUS_TINT[group.status]],
                   )}
                 >
@@ -268,10 +279,10 @@ function GroupedPatientTable({
                   <li key={patient.id} className="border-b last:border-0">
                     <button
                       type="button"
-                      onClick={() => onSelect(patient)}
+                      onClick={(event) => onSelect(patient, event.currentTarget)}
                       className={cn(
                         GROUP_ROW_GRID,
-                        'hover:bg-background w-full px-4 py-3 text-left text-sm transition-colors',
+                        'hover:bg-background w-full px-4 py-3 text-left text-sm transition-colors focus-visible:outline-offset-[-2px]',
                       )}
                     >
                       <span className="flex min-w-0 items-center gap-3">

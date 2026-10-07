@@ -161,7 +161,7 @@ function StackedCard({
         </div>
         <span
           className={cn(
-            'rounded-md px-2 py-0.5 text-xs font-medium whitespace-nowrap',
+            'rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap',
             card.status === 'Active' ? TINT_CLASS.green : TINT_CLASS.amber,
           )}
         >

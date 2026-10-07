@@ -32,6 +32,19 @@ test.describe('coordinator journeys', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Maria Alvarez')
   })
 
+  test('closing the preview drawer returns focus to the row that opened it', async ({ page }) => {
+    await page.goto('/')
+    const row = page.getByRole('button', { name: /Maria Alvarez/ })
+    await row.focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('dialog', { name: 'Maria Alvarez' })).toBeVisible()
+
+    await page.keyboard.press('Escape')
+
+    await expect(page.getByRole('dialog', { name: 'Maria Alvarez' })).toBeHidden()
+    await expect(row).toBeFocused()
+  })
+
   test('sidebar navigation reaches the patient list', async ({ page }) => {
     await page.goto('/')
     await page
@@ -74,10 +87,11 @@ test.describe('coordinator journeys', () => {
   test('status tabs and sort are reflected in the URL and results', async ({ page }) => {
     await page.goto('/patients')
 
-    await page.getByRole('tab', { name: 'Pending intake' }).click()
+    const statusFilters = page.getByRole('navigation', { name: 'Filter by status' })
+    await statusFilters.getByRole('button', { name: 'Pending intake' }).click()
     await expect(page).toHaveURL(/status=pending/)
-    await expect(page.getByRole('tab', { name: 'Pending intake' })).toHaveAttribute(
-      'aria-selected',
+    await expect(statusFilters.getByRole('button', { name: 'Pending intake' })).toHaveAttribute(
+      'aria-pressed',
       'true',
     )
     const table = page.getByRole('table', { name: 'Patients' })

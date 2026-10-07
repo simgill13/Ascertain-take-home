@@ -17,7 +17,7 @@ export function FactGrid({ facts, className }: FactGridProps) {
       {facts.map((fact) => (
         <div key={fact.label} className="min-w-0">
           <dt className="text-muted-foreground text-xs">{fact.label}</dt>
-          <dd className="mt-0.5 text-sm font-medium">{fact.value}</dd>
+          <dd className="mt-0.5 text-sm">{fact.value}</dd>
         </div>
       ))}
     </dl>

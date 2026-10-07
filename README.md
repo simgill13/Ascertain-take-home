@@ -63,7 +63,7 @@ scripts/verify.sh e2e         # Playwright journeys and axe accessibility checks
 | --- | --- | --- |
 | pytest | 24 | `backend/tests/` |
 | Vitest + Testing Library | 26 | `frontend/src/**/*.test.tsx` |
-| Playwright + axe | 20 | `frontend/e2e/` |
+| Playwright + axe | 23 | `frontend/e2e/` |
 
 ## API
 

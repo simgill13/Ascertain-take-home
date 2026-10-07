@@ -23,6 +23,12 @@ export function AppShell() {
       </aside>
 
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+        <div className="bg-card flex min-w-0 flex-1 flex-col">
+          <AppHeader />
+          <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 p-4 sm:p-6">
+            <Outlet />
+          </main>
+        </div>
         <SheetContent
           side="left"
           className="w-72 p-0 data-[state=closed]:duration-150 data-[state=open]:duration-200"
@@ -33,13 +39,6 @@ export function AppShell() {
           <AppSidebar onNavigate={() => setMobileNavOpen(false)} />
         </SheetContent>
       </Sheet>
-
-      <div className="bg-card flex min-w-0 flex-1 flex-col">
-        <AppHeader onOpenMobileNav={() => setMobileNavOpen(true)} />
-        <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 p-4 sm:p-6">
-          <Outlet />
-        </main>
-      </div>
       <Toaster position="bottom-right" richColors closeButton />
     </div>
   )
