@@ -157,8 +157,8 @@ export function PatientListToolbar({
         </div>
       </div>
 
-      <div className="text-muted-foreground flex items-center gap-3 text-sm" aria-live="polite">
-        <span>
+      <div className="text-muted-foreground flex items-center gap-3 text-sm">
+        <span aria-live="polite">
           {isFetching
             ? 'Updating…'
             : resultCount === null

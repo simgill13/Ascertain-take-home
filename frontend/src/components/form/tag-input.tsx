@@ -67,10 +67,10 @@ export function TagInput({
                 <button
                   type="button"
                   aria-label={`Remove ${tag}`}
-                  className="hover:bg-foreground/10 rounded-full p-0.5"
+                  className="hover:bg-foreground/10 relative grid size-5 place-items-center rounded-full before:absolute before:-inset-2 before:content-['']"
                   onClick={() => removeTag(tag)}
                 >
-                  <XIcon className="size-3" aria-hidden="true" />
+                  <XIcon className="size-3.5" aria-hidden="true" />
                 </button>
               </Badge>
             </li>

@@ -24,6 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { LoadingStatus } from '@/components/state/loading-status'
 import { Skeleton } from '@/components/ui/skeleton'
 import { summaryQueryOptions, type PatientSummary } from '@/features/summary/api'
 import { formatDateTime } from '@/lib/format'
@@ -66,11 +67,11 @@ export function SummaryCard({ patientId }: SummaryCardProps) {
       </CardHeader>
       <CardContent>
         {summaryQuery.isPending ? (
-          <div className="space-y-2" aria-busy="true" aria-label="Loading summary">
+          <LoadingStatus label="Loading summary" className="space-y-2">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-11/12" />
             <Skeleton className="h-4 w-4/5" />
-          </div>
+          </LoadingStatus>
         ) : summaryQuery.isError ? (
           <ErrorState error={summaryQuery.error} onRetry={() => void summaryQuery.refetch()} />
         ) : (

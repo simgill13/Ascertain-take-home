@@ -9,6 +9,8 @@ import {
 } from 'motion/react'
 import { useRef } from 'react'
 
+import { useMediaQuery } from '@/hooks/use-media-query'
+
 import { Badge } from '@/components/ui/badge'
 import { SAMPLE_CARDS } from '@/features/landing/landing-copy'
 
@@ -23,12 +25,16 @@ const SCROLL_ROTATE_X = [14, -4]
 const SCROLL_ROTATE_Y = [-18, 6]
 const SCROLL_SPREAD = [1, 1.6]
 const MAX_TILT_DEGREES = 6
+// Narrow screens get half the fan so the back cards stay inside the viewport.
+const NARROW_FAN_SCALE = 0.5
 // Pose shown when the visitor prefers reduced motion.
 const STATIC_ROTATE_X = 6
 const STATIC_ROTATE_Y = -8
 
 export function HeroCardStack() {
   const reduceMotion = useReducedMotion()
+  const isNarrowScreen = useMediaQuery('(max-width: 639px)')
+  const fanScale = isNarrowScreen ? NARROW_FAN_SCALE : 1
   const stackRef = useRef<HTMLDivElement>(null)
 
   const { scrollYProgress } = useScroll({
@@ -72,7 +78,7 @@ export function HeroCardStack() {
   return (
     <div
       ref={stackRef}
-      className="relative mx-auto aspect-[4/3] w-full max-w-md select-none sm:max-w-lg"
+      className="relative mx-auto aspect-[4/3] w-[82%] max-w-md select-none sm:w-full sm:max-w-lg"
       style={{ perspective: 1400 }}
       onPointerMove={handlePointerMove}
       onPointerLeave={resetTilt}
@@ -89,6 +95,7 @@ export function HeroCardStack() {
             offset={CARD_OFFSETS[cardIndex] ?? CARD_OFFSETS[0]}
             stackPosition={cardIndex}
             spread={spread}
+            fanScale={fanScale}
             reduceMotion={Boolean(reduceMotion)}
             entranceDelay={0.15 * (SAMPLE_CARDS.length - cardIndex)}
           />
@@ -102,6 +109,7 @@ type StackedCardProps = {
   card: (typeof SAMPLE_CARDS)[number]
   offset: (typeof CARD_OFFSETS)[number]
   spread: MotionValue<number>
+  fanScale: number
   stackPosition: number
   reduceMotion: boolean
   entranceDelay: number
@@ -111,11 +119,12 @@ function StackedCard({
   card,
   offset,
   spread,
+  fanScale,
   stackPosition,
   reduceMotion,
   entranceDelay,
 }: StackedCardProps) {
-  const effectiveSpread = (spreadFactor: number) => (reduceMotion ? 1 : spreadFactor)
+  const effectiveSpread = (spreadFactor: number) => (reduceMotion ? 1 : spreadFactor) * fanScale
   const translateX = useTransform(
     spread,
     (spreadFactor) => offset.shiftX * effectiveSpread(spreadFactor),

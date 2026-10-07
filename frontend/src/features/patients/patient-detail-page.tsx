@@ -3,6 +3,7 @@ import { Link, useParams } from '@tanstack/react-router'
 import { ArrowLeftIcon, PencilIcon } from 'lucide-react'
 
 import { ErrorState } from '@/components/state/error-state'
+import { LoadingStatus } from '@/components/state/loading-status'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -70,7 +71,7 @@ function PatientDetail({ patient }: { patient: Patient }) {
         </div>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card role="region" aria-label="Contact">
           <CardHeader>
             <CardTitle>Contact</CardTitle>
@@ -148,11 +149,11 @@ function PatientDetail({ patient }: { patient: Patient }) {
         </Card>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-5">
-        <div className="xl:col-span-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
+        <div className="min-w-0 xl:col-span-2">
           <SummaryCard patientId={patient.id} />
         </div>
-        <div className="xl:col-span-3">
+        <div className="min-w-0 xl:col-span-3">
           <NotesSection patientId={patient.id} />
         </div>
       </div>
@@ -202,16 +203,16 @@ function TagList({
 
 function PatientDetailSkeleton() {
   return (
-    <div className="space-y-6" aria-busy="true" aria-label="Loading patient">
+    <LoadingStatus label="Loading patient" className="space-y-6">
       <div className="space-y-2">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-4 w-48" />
       </div>
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {Array.from({ length: SKELETON_CARD_COUNT }, (_unused, cardIndex) => (
           <Skeleton key={cardIndex} className="h-44" />
         ))}
       </div>
-    </div>
+    </LoadingStatus>
   )
 }

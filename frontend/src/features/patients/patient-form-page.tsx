@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 
 import { PageHeader } from '@/components/layout/page-header'
 import { Button } from '@/components/ui/button'
+import { LoadingStatus } from '@/components/state/loading-status'
 import { Skeleton } from '@/components/ui/skeleton'
 import { patientQueryOptions } from '@/features/patients/api'
 import { PatientLoadError } from '@/features/patients/patient-detail-page'
@@ -64,10 +65,10 @@ export function EditPatientPage() {
         </Link>
       </Button>
       {patientQuery.isPending ? (
-        <div className="max-w-3xl space-y-4" aria-busy="true" aria-label="Loading patient">
+        <LoadingStatus label="Loading patient" className="max-w-3xl space-y-4">
           <Skeleton className="h-8 w-56" />
           <Skeleton className="h-96" />
-        </div>
+        </LoadingStatus>
       ) : patientQuery.isError ? (
         <PatientLoadError error={patientQuery.error} onRetry={() => void patientQuery.refetch()} />
       ) : (

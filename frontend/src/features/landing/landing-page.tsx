@@ -60,7 +60,7 @@ export function LandingPage() {
             </motion.div>
           </div>
 
-          <div className="pt-6 lg:pt-0">
+          <div className="pt-6 lg:pt-0 lg:pr-24 xl:pr-12">
             <HeroCardStack />
           </div>
         </section>

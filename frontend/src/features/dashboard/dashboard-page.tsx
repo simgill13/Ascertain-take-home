@@ -4,6 +4,7 @@ import { ActivityIcon, CalendarClockIcon, UserPlusIcon, UsersIcon } from 'lucide
 
 import { PageHeader } from '@/components/layout/page-header'
 import { ErrorState } from '@/components/state/error-state'
+import { LoadingStatus } from '@/components/state/loading-status'
 import { Button } from '@/components/ui/button'
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -59,8 +60,8 @@ export function DashboardPage() {
         <StatCards stats={statsQuery.data} />
       )}
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-5">
-        <Card className="lg:col-span-2">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <Card className="min-w-0 lg:col-span-2">
           <CardHeader>
             <CardTitle>Patients by status</CardTitle>
           </CardHeader>
@@ -70,12 +71,14 @@ export function DashboardPage() {
             ) : statsQuery.data ? (
               <StatusChart stats={statsQuery.data} />
             ) : (
-              <Skeleton className="h-40" aria-label="Loading status chart" />
+              <LoadingStatus label="Loading status chart">
+                <Skeleton className="h-40" />
+              </LoadingStatus>
             )}
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-3">
+        <Card className="min-w-0 lg:col-span-3">
           <CardHeader>
             <CardTitle>Recent visits</CardTitle>
             <CardAction>
@@ -93,7 +96,9 @@ export function DashboardPage() {
                 onRetry={() => void recentVisitsQuery.refetch()}
               />
             ) : recentVisitsQuery.isPending ? (
-              <Skeleton className="h-40" aria-label="Loading recent visits" />
+              <LoadingStatus label="Loading recent visits">
+                <Skeleton className="h-40" />
+              </LoadingStatus>
             ) : (
               <ul className="divide-y">
                 {recentVisitsQuery.data.items
@@ -153,7 +158,7 @@ function StatCards({ stats }: { stats: PatientStats | undefined }) {
     },
   ]
   return (
-    <ul className="grid grid-cols-2 gap-4 xl:grid-cols-4" aria-label="Practice totals">
+    <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="Practice totals">
       {cards.map((card) => {
         const Icon = card.icon
         return (
@@ -168,13 +173,13 @@ function StatCards({ stats }: { stats: PatientStats | undefined }) {
                   >
                     {card.label}
                   </Link>
-                  <p className="font-display mt-1 text-3xl font-semibold tabular-nums">
+                  <div className="font-display mt-1 text-3xl font-semibold tabular-nums">
                     {card.value === undefined ? (
                       <Skeleton className="mt-1 h-8 w-12" />
                     ) : (
                       card.value.toLocaleString('en-US')
                     )}
-                  </p>
+                  </div>
                 </div>
                 <Icon className="text-muted-foreground size-5 shrink-0" aria-hidden="true" />
               </CardContent>
@@ -211,10 +216,10 @@ function StatusChart({ stats }: { stats: PatientStats }) {
             >
               <div
                 className={cn(
-                  'h-full rounded-full transition-[width] duration-200',
+                  'h-full origin-left rounded-full transition-transform duration-200',
                   STATUS_BAR_CLASS[statusCount.status],
                 )}
-                style={{ width: `${widthPercent}%` }}
+                style={{ transform: `scaleX(${widthPercent / 100})` }}
               />
             </div>
           </li>

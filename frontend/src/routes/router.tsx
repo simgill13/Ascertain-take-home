@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-router'
 
 import { AppShell } from '@/components/layout/app-shell'
+import { RouteErrorPage } from '@/routes/route-error-page'
 import {
   DEFAULT_PATIENT_LIST_SEARCH,
   patientListSearchSchema,
@@ -28,6 +29,7 @@ const shellRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'shell',
   component: AppShell,
+  notFoundComponent: NotFoundPage,
 })
 
 const dashboardRoute = createRoute({
@@ -102,6 +104,7 @@ export function createAppRouter(queryClient: QueryClient) {
     defaultPreload: 'intent',
     scrollRestoration: true,
     defaultNotFoundComponent: NotFoundPage,
+    defaultErrorComponent: RouteErrorPage,
   })
 }
 

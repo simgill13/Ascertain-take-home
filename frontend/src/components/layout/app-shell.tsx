@@ -25,7 +25,10 @@ export function AppShell() {
         </aside>
 
         <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-          <SheetContent side="left" className="w-72 p-0">
+          <SheetContent
+            side="left"
+            className="w-72 p-0 data-[state=closed]:duration-150 data-[state=open]:duration-200"
+          >
             <SheetHeader className="sr-only">
               <SheetTitle>Navigation</SheetTitle>
             </SheetHeader>

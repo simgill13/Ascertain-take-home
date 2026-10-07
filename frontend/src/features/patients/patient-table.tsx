@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useRef } from 'react'
 
+import { LoadingStatus } from '@/components/state/loading-status'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PatientStatusBadge } from '@/features/patients/patient-status-badge'
 import type { Patient } from '@/features/patients/types'
@@ -39,7 +40,7 @@ export function PatientTable({ patients, isLoading, className }: PatientTablePro
       <div
         role="table"
         aria-label="Patients"
-        aria-rowcount={patients.length}
+        aria-rowcount={patients.length + 1}
         className="flex h-full flex-col"
       >
         <div role="rowgroup">
@@ -66,7 +67,7 @@ export function PatientTable({ patients, isLoading, className }: PatientTablePro
                 <div
                   key={patient.id}
                   role="row"
-                  aria-rowindex={virtualRow.index + 1}
+                  aria-rowindex={virtualRow.index + 2}
                   data-index={virtualRow.index}
                   ref={virtualizer.measureElement}
                   className="absolute top-0 left-0 w-full"
@@ -107,9 +108,14 @@ function PatientRow({ patient }: { patient: Patient }) {
         {formatAge(patient.age)}
       </div>
       <div role="cell" className="hidden text-sm sm:block">
-        <span title={formatDate(patient.last_visit_at)}>
-          {formatRelativeDate(patient.last_visit_at)}
-        </span>
+        {patient.last_visit_at ? (
+          <time dateTime={patient.last_visit_at}>
+            {formatRelativeDate(patient.last_visit_at)}
+            <span className="text-muted-foreground"> · {formatDate(patient.last_visit_at)}</span>
+          </time>
+        ) : (
+          <span className="text-muted-foreground">{formatRelativeDate(null)}</span>
+        )}
       </div>
       <div role="cell" className="justify-self-end sm:justify-self-start">
         <PatientStatusBadge status={patient.status} />
@@ -120,10 +126,9 @@ function PatientRow({ patient }: { patient: Patient }) {
 
 function PatientTableSkeleton() {
   return (
-    <div
+    <LoadingStatus
+      label="Loading patients"
       className="space-y-px overflow-hidden rounded-lg border"
-      aria-busy="true"
-      aria-label="Loading patients"
     >
       {Array.from({ length: SKELETON_ROW_COUNT }, (_unused, rowIndex) => (
         <div
@@ -136,6 +141,6 @@ function PatientTableSkeleton() {
           <Skeleton className="h-5 w-20 rounded-full" />
         </div>
       ))}
-    </div>
+    </LoadingStatus>
   )
 }

@@ -39,15 +39,28 @@ test.describe('accessibility', () => {
     await expectNoAxeViolations(page)
   })
 
+  test('no route overflows horizontally at 320px', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 640 })
+    const routes = ['/', '/patients', '/patients/new', '/welcome', '/missing-route']
+    for (const route of routes) {
+      await page.goto(route)
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+      await page.waitForLoadState('networkidle')
+      const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth)
+      expect(scrollWidth, `${route} overflows`).toBeLessThanOrEqual(320)
+    }
+
+    await page.goto('/patients?search=alvarez')
+    await page.getByRole('link', { name: 'Alvarez, Maria' }).click()
+    await expect(page.locator('#summary')).toContainText('Maria Alvarez')
+    const detailScrollWidth = await page.evaluate(() => document.documentElement.scrollWidth)
+    expect(detailScrollWidth, '/patients/:id overflows').toBeLessThanOrEqual(320)
+  })
+
   test('list stays usable at a narrow viewport', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 640 })
     await page.goto('/patients')
     await expect(page.getByRole('table', { name: 'Patients' })).toBeVisible()
-
-    const hasHorizontalOverflow = await page.evaluate(
-      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
-    )
-    expect(hasHorizontalOverflow).toBe(false)
 
     await page.getByRole('button', { name: 'Open navigation' }).click()
     await expect(page.getByRole('dialog', { name: 'Navigation' })).toBeVisible()

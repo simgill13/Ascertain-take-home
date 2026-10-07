@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { LoadingStatus } from '@/components/state/loading-status'
 import { Skeleton } from '@/components/ui/skeleton'
 import { notesQueryOptions, type Note } from '@/features/notes/api'
 import { NoteForm } from '@/features/notes/note-form'
@@ -147,7 +148,7 @@ function DeleteNoteDialog({ note, isDeleting, onCancel, onConfirm }: DeleteNoteD
 
 function NotesSkeleton() {
   return (
-    <div className="space-y-4" aria-busy="true" aria-label="Loading notes">
+    <LoadingStatus label="Loading notes" className="space-y-4">
       {Array.from({ length: SKELETON_NOTE_COUNT }, (_unused, rowIndex) => (
         <div key={rowIndex} className="space-y-2">
           <Skeleton className="h-3 w-40" />
@@ -155,6 +156,6 @@ function NotesSkeleton() {
           <Skeleton className="h-4 w-3/4" />
         </div>
       ))}
-    </div>
+    </LoadingStatus>
   )
 }
