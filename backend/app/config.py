@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     db_pool_recycle_seconds: int = 1800
     # A slow query gives up instead of holding a pooled connection.
     db_statement_timeout_ms: int = 5000
+    # A transaction left open by a stuck request is closed rather than pinning a connection.
+    db_idle_in_transaction_timeout_ms: int = 10000
 
     # Per-client request budget, enforced per worker process. 0 disables it.
     rate_limit_per_minute: int = 600

@@ -11,7 +11,8 @@ The `scalability-engineer` agent reviewed the running code against this target (
 | Multiple worker processes | `backend/scripts/start.sh` | `WEB_CONCURRENCY` (default 2 in compose); `--reload` forces one process in dev |
 | Seed safe under many workers | `backend/app/seed/seed.py` | `pg_advisory_xact_lock` serialises workers; the second one sees a populated table |
 | Connection pool per worker | `backend/app/database.py`, `config.py` | `DB_POOL_SIZE=10`, `DB_MAX_OVERFLOW=10`, 10 s checkout timeout, 30 min recycle |
-| Statement timeout | `backend/app/database.py` | 5 s via asyncpg `server_settings`; a slow query gives up instead of holding the pool |
+| Statement and idle timeouts | `backend/app/database.py` | 5 s statement timeout and 10 s idle-in-transaction timeout via asyncpg `server_settings`; a slow query or a stuck transaction gives up instead of holding the pool |
+| Load shedding | `backend/scripts/start.sh` | `--limit-concurrency 512` answers 503 beyond that instead of queueing; `--timeout-keep-alive 5`; uvicorn access log off because the middleware logs each request |
 | Postgres headroom | `docker-compose.yml` | `max_connections=200`, `shared_buffers=256MB`; budget is workers x (pool + overflow) |
 | Trigram search indexes | `backend/alembic/versions/0002_search_and_sort_indexes.py` | `pg_trgm` GIN on first name, last name, email, and `first_name || ' ' || last_name`; `test_search_uses_trigram_index` asserts the plan |
 | Sort indexes | same revision | composite b-trees including the `(last_name, first_name, id)` tiebreakers, plus `(status, last_visit_at DESC NULLS LAST)` |

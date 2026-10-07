@@ -21,7 +21,12 @@ def create_engine() -> AsyncEngine:
         pool_timeout=settings.db_pool_timeout_seconds,
         pool_recycle=settings.db_pool_recycle_seconds,
         connect_args={
-            "server_settings": {"statement_timeout": str(settings.db_statement_timeout_ms)}
+            "server_settings": {
+                "statement_timeout": str(settings.db_statement_timeout_ms),
+                "idle_in_transaction_session_timeout": str(
+                    settings.db_idle_in_transaction_timeout_ms
+                ),
+            }
         },
     )
 
